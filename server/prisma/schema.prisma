@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Пользователи
+model User {
+  id          String   @id @default(cuid())
+  telegramId  String   @unique
+  firstName   String
+  lastName    String?
+  username    String?
+  photoUrl    String?
+  lastActive  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Связи
+  orders      Order[]
+
+  @@map("users")
+}
+
+// Категории меню
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Связи
+  items       MenuItem[]
+
+  @@map("categories")
+}
+
+// Блюда меню
+model MenuItem {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  ingredients String?
+  price       Decimal  @db.Decimal(10, 2)
+  weight      Int?     // вес в граммах
+  calories    Int?
+  proteins    Decimal? @db.Decimal(5, 2)
+  fats        Decimal? @db.Decimal(5, 2)
+  carbs       Decimal? @db.Decimal(5, 2)
+  imageUrl    String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  hasVariants Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Связи
+  categoryId  String
+  category    Category       @relation(fields: [categoryId], references: [id])
+  variants    MenuVariant[]
+
+  @@map("menu_items")
+}
+
+// Варианты блюд (например, на воде/на молоке для каши)
+model MenuVariant {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  priceModifier Decimal @default(0) @db.Decimal(10, 2) // изменение цены от базовой
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Связи
+  menuItemId  String
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@map("menu_variants")
+}
+
+// Заказы
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique @default(cuid())
+  userId          String
+  items           Json        // JSON массив с товарами
+  totalAmount     Decimal     @db.Decimal(10, 2)
+  status          OrderStatus @default(PENDING)
+  deliveryAddress String?
+  phone           String?
+  notes           String?
+  deliveryTime    DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Связи
+  user            User        @relation(fields: [userId], references: [telegramId])
+
+  @@map("orders")
+}
+
+// Статусы заказов
+enum OrderStatus {
+  PENDING     // Ожидает подтверждения
+  CONFIRMED   // Подтвержден
+  PREPARING   // Готовится
+  READY       // Готов к доставке
+  DELIVERING  // Доставляется
+  DELIVERED   // Доставлен
+  CANCELLED   // Отменен
+
+  @@map("order_status")
+} 
