@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import { validateTelegramWebAppData } from './utils/telegram';
+import './types';
 
 // Загружаем переменные окружения
 dotenv.config();
@@ -145,6 +146,10 @@ app.post('/api/orders', authenticateTelegramUser, async (req, res) => {
     const { items, deliveryAddress, phone, notes } = req.body;
     const telegramUser = req.telegramUser;
 
+    if (!telegramUser) {
+      return res.status(401).json({ error: 'Пользователь не авторизован' });
+    }
+
     // Создаем заказ
     const order = await prisma.order.create({
       data: {
@@ -153,7 +158,7 @@ app.post('/api/orders', authenticateTelegramUser, async (req, res) => {
         deliveryAddress,
         phone,
         notes,
-        status: 'pending',
+        status: 'PENDING',
         totalAmount: calculateTotalAmount(items),
       },
     });
@@ -163,9 +168,11 @@ app.post('/api/orders', authenticateTelegramUser, async (req, res) => {
       orderId: order.id,
       message: 'Заказ успешно создан'
     });
+    return;
   } catch (error) {
     console.error('Ошибка создания заказа:', error);
     res.status(500).json({ error: 'Ошибка создания заказа' });
+    return;
   }
 });
 
@@ -174,6 +181,10 @@ app.get('/api/orders', authenticateTelegramUser, async (req, res) => {
   try {
     const telegramUser = req.telegramUser;
     
+    if (!telegramUser) {
+      return res.status(401).json({ error: 'Пользователь не авторизован' });
+    }
+    
     const orders = await prisma.order.findMany({
       where: { userId: telegramUser.id.toString() },
       orderBy: { createdAt: 'desc' },
@@ -181,9 +192,11 @@ app.get('/api/orders', authenticateTelegramUser, async (req, res) => {
     });
 
     res.json(orders);
+    return;
   } catch (error) {
     console.error('Ошибка получения заказов:', error);
     res.status(500).json({ error: 'Ошибка получения заказов' });
+    return;
   }
 });
 
