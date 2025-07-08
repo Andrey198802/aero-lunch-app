@@ -2,6 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 
 interface MenuPageProps {
   onNavigateToLanding: () => void
+  onNavigateToCart: () => void
+  cart: CartItem[]
+  onUpdateCart: (cart: CartItem[]) => void
 }
 
 interface CartItem {
@@ -12,42 +15,67 @@ interface CartItem {
   variant?: string
 }
 
-export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
+interface MenuItem {
+  id: number
+  title: string
+  description: string
+  price: number
+  image: string
+}
+
+interface ItemDetails {
+  description: string
+  ingredients: string
+  nutrition: {
+    proteins: number
+    fats: number
+    carbs: number
+    calories: number
+  }
+  weight: number
+  images: string[]
+}
+
+interface DetailedMenuItem extends MenuItem, ItemDetails {}
+
+export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, onUpdateCart }: MenuPageProps) {
   const [selectedCategory, setSelectedCategory] = useState('Завтраки')
-  const [cart, setCart] = useState<CartItem[]>([])
   const [showVariantModal, setShowVariantModal] = useState(false)
   const [selectedItem, setSelectedItem] = useState<{ id: number; title: string; price: number } | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
-  const [selectedDetailItem, setSelectedDetailItem] = useState<any>(null)
+  const [selectedDetailItem, setSelectedDetailItem] = useState<DetailedMenuItem | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+
   
   // Функции для работы с корзиной
   const addToCart = (item: { id: number; title: string; price: number }, variant?: string) => {
-    setCart(prev => {
-      const existingItem = prev.find(cartItem => cartItem.id === item.id && cartItem.variant === variant)
-      if (existingItem) {
-        return prev.map(cartItem =>
-          cartItem.id === item.id && cartItem.variant === variant
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        )
-      }
-      return [...prev, { ...item, quantity: 1, variant }]
-    })
+    const existingItem = cart.find(cartItem => cartItem.id === item.id && cartItem.variant === variant)
+    if (existingItem) {
+      const newCart = cart.map(cartItem =>
+        cartItem.id === item.id && cartItem.variant === variant
+          ? { ...cartItem, quantity: cartItem.quantity + 1 }
+          : cartItem
+      )
+      onUpdateCart(newCart)
+    } else {
+      const newCart = [...cart, { ...item, quantity: 1, variant }]
+      onUpdateCart(newCart)
+    }
   }
   
   const removeFromCart = (itemId: number, variant?: string) => {
-    setCart(prev => {
-      const existingItem = prev.find(cartItem => cartItem.id === itemId && cartItem.variant === variant)
-      if (existingItem && existingItem.quantity > 1) {
-        return prev.map(cartItem =>
-          cartItem.id === itemId && cartItem.variant === variant
-            ? { ...cartItem, quantity: cartItem.quantity - 1 }
-            : cartItem
-        )
-      }
-      return prev.filter(cartItem => !(cartItem.id === itemId && cartItem.variant === variant))
-    })
+    const existingItem = cart.find(cartItem => cartItem.id === itemId && cartItem.variant === variant)
+    if (existingItem && existingItem.quantity > 1) {
+      const newCart = cart.map(cartItem =>
+        cartItem.id === itemId && cartItem.variant === variant
+          ? { ...cartItem, quantity: cartItem.quantity - 1 }
+          : cartItem
+      )
+      onUpdateCart(newCart)
+    } else {
+      const newCart = cart.filter(cartItem => !(cartItem.id === itemId && cartItem.variant === variant))
+      onUpdateCart(newCart)
+    }
   }
   
   const getCartItemQuantity = (itemId: number, variant?: string) => {
@@ -86,26 +114,7 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
     return [1, 2, 4, 5, 14].includes(itemId)
   }
 
-  // Получение детальной информации о блюде
-  const getItemDetails = (itemId: number) => {
-    switch (itemId) {
-      case 3: // Блинчики с мясом и микс-салатом
-        return {
-          description: 'Нежные тонкие блинчики с сочной мясной начинкой и свежим микс-салатом. Идеальное сочетание вкуса и сытности.',
-          ingredients: 'Мука пшеничная, молоко, яйца, мясной фарш (говядина, свинина), лук, морковь, салат айсберг, руккола, томаты черри, огурцы',
-          nutrition: {
-            proteins: 18,
-            fats: 12,
-            carbs: 35,
-            calories: 290
-          },
-          weight: 250,
-          images: ['/logo4.svg', '/logo4.svg'] // Пока используем заглушки
-        }
-      default:
-        return null
-    }
-  }
+
 
   // Функции для работы с вариантами
   const openVariantModal = (item: { id: number; title: string; price: number }) => {
@@ -126,7 +135,7 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
   }
 
   // Функции для работы с детальным модальным окном
-  const openDetailModal = (item: any) => {
+  const openDetailModal = (item: MenuItem) => {
     const details = getItemDetails(item.id)
     if (details) {
       setSelectedDetailItem({ ...item, ...details })
@@ -140,6 +149,8 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
     setSelectedDetailItem(null)
     setCurrentImageIndex(0)
   }
+
+
   
   // Функция для уменьшения количества товара с вариантами (выбирает последний добавленный вариант)
   const removeVariantItemFromCart = (itemId: number) => {
@@ -173,7 +184,7 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
           <div className="price-button">
             <button 
               onClick={() => openVariantModal(item)}
-              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold text-sm py-2 px-3 rounded-xl transition-colors h-10 flex items-center justify-center"
+              className="w-full bg-gray-100 hover:bg-gray-200 text-primary-900 font-semibold text-sm py-2 px-3 rounded-xl transition-colors h-10 flex items-center justify-center"
             >
               {item.price}₽
             </button>
@@ -183,19 +194,19 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
       
       return (
         <div className="price-button">
-          <div className="flex items-center bg-white border-2 border-orange-500 rounded-xl h-10">
+          <div className="flex items-center bg-white border-2 border-accent-500 rounded-xl h-10">
             <button 
               onClick={() => removeVariantItemFromCart(item.id)}
-              className="text-gray-800 font-bold text-lg px-3 py-2 flex-none"
+              className="text-primary-900 font-bold text-lg px-3 py-2 flex-none"
             >
               -
             </button>
-            <div className="flex-1 text-center text-gray-800 font-semibold text-sm">
+            <div className="flex-1 text-center text-primary-900 font-semibold text-sm">
               {totalQuantity}
             </div>
             <button 
               onClick={() => openVariantModal(item)}
-              className="text-gray-800 font-bold text-lg px-3 py-2 flex-none"
+              className="text-primary-900 font-bold text-lg px-3 py-2 flex-none"
             >
               +
             </button>
@@ -212,7 +223,7 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
         <div className="price-button">
           <button 
             onClick={() => addToCart(item)}
-            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold text-sm py-2 px-3 rounded-xl transition-colors h-10 flex items-center justify-center"
+            className="w-full bg-gray-100 hover:bg-gray-200 text-primary-900 font-semibold text-sm py-2 px-3 rounded-xl transition-colors h-10 flex items-center justify-center"
           >
             {item.price}₽
           </button>
@@ -222,19 +233,19 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
     
     return (
       <div className="price-button">
-        <div className="flex items-center bg-white border-2 border-orange-500 rounded-xl h-10">
+        <div className="flex items-center bg-white border-2 border-accent-500 rounded-xl h-10">
           <button 
             onClick={() => removeFromCart(item.id)}
-            className="text-gray-800 font-bold text-lg px-3 py-2 flex-none"
+            className="text-primary-900 font-bold text-lg px-3 py-2 flex-none"
           >
             -
           </button>
-          <div className="flex-1 text-center text-gray-800 font-semibold text-sm">
+          <div className="flex-1 text-center text-primary-900 font-semibold text-sm">
             {quantity}
           </div>
           <button 
             onClick={() => addToCart(item)}
-            className="text-gray-800 font-bold text-lg px-3 py-2 flex-none"
+            className="text-primary-900 font-bold text-lg px-3 py-2 flex-none"
           >
             +
           </button>
@@ -243,142 +254,97 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
     )
   }
   
-  // Refs для секций
-  const breakfastRef = useRef<HTMLDivElement>(null)
-  const sandwichRef = useRef<HTMLDivElement>(null)
-  const snacksRef = useRef<HTMLDivElement>(null)
-  const saladsRef = useRef<HTMLDivElement>(null)
-  const soupsRef = useRef<HTMLDivElement>(null)
-  const hotRef = useRef<HTMLDivElement>(null)
-  const sidesRef = useRef<HTMLDivElement>(null)
+
   
   // Ref для горизонтального меню категорий
   const categoriesMenuRef = useRef<HTMLDivElement>(null)
+  // Флаг для отслеживания ручного выбора категории
+  const isManualSelection = useRef(false)
   
   const categories = [
-    'Любимые',
-    'Хиты продаж', 
-    'Новинки',
     'Завтраки',
     'Сендвичи',
     'Закуски на компанию',
     'Салаты',
     'Супы',
     'Горячее',
-    'Гарниры',
-    'Десерты'
+    'Гарниры'
   ]
 
-  // Функция для скролла к секции
+  // Простая функция для скролла к секции
+  // Простая функция для скролла к секции
   const scrollToSection = (category: string) => {
+    // Помечаем что это ручной выбор
+    isManualSelection.current = true
     setSelectedCategory(category)
     
-    let targetElement: HTMLDivElement | null = null
-    
-    switch (category) {
-      case 'Завтраки':
-        targetElement = breakfastRef.current
-        break
-      case 'Сендвичи':
-        targetElement = sandwichRef.current
-        break
-      case 'Закуски на компанию':
-        targetElement = snacksRef.current
-        break
-      case 'Салаты':
-        targetElement = saladsRef.current
-        break
-      case 'Супы':
-        targetElement = soupsRef.current
-        break
-      case 'Горячее':
-        targetElement = hotRef.current
-        break
-      case 'Гарниры':
-        targetElement = sidesRef.current
-        break
-      default:
-        return
-    }
-    
-    if (targetElement) {
-      // Учитываем высоту фиксированного header + меню категорий (примерно 120px)
-      const headerHeight = 120
-      const elementPosition = targetElement.offsetTop - headerHeight
-      window.scrollTo({
-        top: elementPosition,
-        behavior: 'smooth'
-      })
-    }
+    // Небольшая задержка чтобы горизонтальный скролл не мешал
+    setTimeout(() => {
+      const element = document.getElementById(category)
+      if (element) {
+        element.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        })
+      }
+    }, 100)
   }
 
-  // Функция для определения активной секции при скролле
-  const updateActiveSection = () => {
-    const headerHeight = 120
-    const scrollPosition = window.scrollY + headerHeight + 100 // Добавляем больше отступа для лучшего UX
-    
+  // Используем IntersectionObserver для отслеживания видимых секций
+  useEffect(() => {
+    const options = {
+      root: null,
+      rootMargin: '-30% 0px -60% 0px', // Учитываем только среднюю часть экрана
+      threshold: 0
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setSelectedCategory(entry.target.id)
+        }
+      })
+    }, options)
+
+    // Наблюдаем за всеми секциями
     const sections = [
-      { name: 'Завтраки', ref: breakfastRef },
-      { name: 'Сендвичи', ref: sandwichRef },
-      { name: 'Закуски на компанию', ref: snacksRef },
-      { name: 'Салаты', ref: saladsRef },
-      { name: 'Супы', ref: soupsRef },
-      { name: 'Горячее', ref: hotRef },
-      { name: 'Гарниры', ref: sidesRef }
+      'Завтраки', 'Сендвичи', 'Закуски на компанию', 
+      'Салаты', 'Супы', 'Горячее', 'Гарниры'
     ]
     
-    let currentSection = sections[0].name // По умолчанию первая секция
-    
-    for (let i = 0; i < sections.length; i++) {
-      const section = sections[i]
-      if (section.ref.current && section.ref.current.offsetTop <= scrollPosition) {
-        currentSection = section.name
+    sections.forEach(sectionName => {
+      const element = document.getElementById(sectionName)
+      if (element) {
+        observer.observe(element)
       }
-    }
-    
-    setSelectedCategory(currentSection)
-  }
+    })
 
-  // Добавляем слушатель скролла с throttle для оптимизации
-  useEffect(() => {
-    let ticking = false
-    
-    const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          updateActiveSection()
-          ticking = false
-        })
-        ticking = true
-      }
-    }
-    
-    window.addEventListener('scroll', handleScroll)
-    
-    // Вызываем сразу для установки начального состояния
-    updateActiveSection()
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-    }
+    return () => observer.disconnect()
   }, [])
+
+
 
   // Автоматический скролл горизонтального меню к активной кнопке
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (categoriesMenuRef.current) {
-        const activeButton = categoriesMenuRef.current.querySelector(`[data-category="${selectedCategory}"]`) as HTMLButtonElement
-        if (activeButton) {
-          activeButton.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-            inline: 'center'
-          })
+    // Не скроллим горизонтальное меню если категория была выбрана кликом
+    if (!isManualSelection.current) {
+      const timer = setTimeout(() => {
+        if (categoriesMenuRef.current) {
+          const activeButton = categoriesMenuRef.current.querySelector(`[data-category="${selectedCategory}"]`) as HTMLButtonElement
+          if (activeButton) {
+            activeButton.scrollIntoView({
+              behavior: 'smooth',
+              block: 'nearest',
+              inline: 'center'
+            })
+          }
         }
-      }
-    }, 50) // Небольшая задержка для лучшего UX
-    
-    return () => clearTimeout(timer)
+      }, 50)
+      
+      return () => clearTimeout(timer)
+    }
+    // Сбрасываем флаг после использования
+    isManualSelection.current = false
   }, [selectedCategory])
 
   const breakfastItems = [
@@ -387,98 +353,98 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
       title: 'Каша овсяная со свежими ягодами на выбор',
       description: 'на воде\\молоке\\ альтернативном молоке',
       price: 900,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 2,
       title: 'Каша пшённая с чатни из тыквы на выбор',
       description: 'на молоке\\альтернативном молоке',
       price: 900,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 3,
       title: 'Блинчики с мясом и микс-салатом',
       description: '',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 4,
       title: 'Блинчики с творогом на выбор',
       description: 'со сметаной\\сгущенным молоком',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 5,
       title: 'Сырники со свежими ягодами на выбор',
       description: 'вареньем из вишни\\сметаной\\сгущённым молоком',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 6,
       title: 'Яйцо пашот с микс-салатом',
       description: '',
       price: 700,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 7,
       title: 'Яичница глазунья с микс-салатом',
       description: '',
       price: 700,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 8,
       title: 'Омлет классический с микс-салатом',
       description: '',
       price: 700,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 9,
       title: 'Скрэмбл с микс-салатом',
       description: '',
       price: 700,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 10,
       title: 'Картофельные драники с лососем',
       description: '',
       price: 1500,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 11,
       title: 'Слабосоленый лосось с жаренным авокадо и яйцом пашот',
       description: '',
       price: 1500,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 12,
       title: 'Оладьи из кабачков с тигровыми креветками',
       description: 'и соусом ткемали',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 13,
       title: 'Домашний йогурт со свежими ягодами',
       description: '',
       price: 800,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 14,
       title: 'Блинчики с маслом и ягодами, на выбор',
       description: 'вареньем из вишни\\сметаной\\сгущённым молоком',
       price: 900,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     }
   ]
 
@@ -488,63 +454,63 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
       title: 'Сэндвич с лососем и соусом из артишоков',
       description: '',
       price: 1600,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 16,
       title: 'Сэндвич с куриным филе и соусом свит чили',
       description: '',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 17,
       title: 'Сэндвич с ростбифом, глазуньей и горчичным соусом',
       description: '',
       price: 1800,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 18,
       title: 'Сэндвич с ветчиной и сыром',
       description: '',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 19,
       title: 'Чиабатта с бужениной и пикантным соусом',
       description: '',
       price: 1800,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 20,
       title: 'Чиабатта с пастрами из индейки, жареными кабачками и соусом сацебели',
       description: '',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 21,
       title: 'Круассан с лососем, свежим огурцом и сливочным сыром',
       description: '',
       price: 1800,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 22,
       title: 'Круассан с ветчиной и сыром',
       description: '',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 23,
       title: 'Круассан с сыром',
       description: '',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     }
   ]
 
@@ -554,49 +520,49 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
       title: 'Мясное ассорти с микс-салатом',
       description: '',
       price: 4800,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 25,
       title: 'Рыбное ассорти',
       description: '',
       price: 8000,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 26,
       title: 'Сало с солёными огурцами и зелёным луком',
       description: '',
       price: 1200,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 27,
       title: 'Ассорти из свежих овощей',
       description: '',
       price: 1600,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 28,
       title: 'Сырное ассорти со свежими ягодами, грецкими орехами и мёдом',
       description: '',
       price: 5400,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 29,
       title: 'Соленья бочковые',
       description: '',
       price: 1200,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 30,
       title: 'Сельдь атлантическая с чесночными гренками и мини картофелем',
       description: '',
       price: 1200,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     }
   ]
 
@@ -606,84 +572,84 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
       title: 'Легкий салат с сыром фета',
       description: '',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 32,
       title: 'Салат Цезарь с цыплёнком',
       description: '',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 33,
       title: 'Салат Цезарь с креветками',
       description: '',
       price: 1700,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 34,
       title: 'Салат Цезарь с лососем',
       description: '',
       price: 2200,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 35,
       title: 'Салат Оливье с цыплёнком',
       description: '',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 36,
       title: 'Салат Оливье с ростбифом',
       description: '',
       price: 1700,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 37,
       title: 'Салат Оливье с лососем',
       description: '',
       price: 2200,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 38,
       title: 'Салат с жаренным авокадо, креветками Том Ям и манговым соусом',
       description: '',
       price: 2600,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 39,
       title: 'Салат с ростбифом, корнишонами и сметанной заправкой',
       description: '',
       price: 2300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 40,
       title: 'Салат с печеной свеклой и битыми огурцами',
       description: '',
       price: 900,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 41,
       title: 'Тёплый салат из баклажан с соусом свит чили',
       description: '',
       price: 1400,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 42,
       title: 'Салат из спелых томатов, сыром фета и красным луком',
       description: '',
       price: 1200,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     }
   ]
 
@@ -693,49 +659,49 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
       title: 'Суп карри с тигровыми креветками на кокосовом молоке',
       description: '',
       price: 1950,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 44,
       title: 'Солянка мясная',
       description: '',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 45,
       title: 'Борщ с салом и ржаными гренками',
       description: '',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 46,
       title: 'Уха из судака и лосося с пирожком',
       description: '',
       price: 1900,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 47,
       title: 'Крем суп из белых грибов с пшеничными гренками',
       description: '',
       price: 1300,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 48,
       title: 'Крем суп из тыквы с тигровыми креветками',
       description: '',
       price: 1900,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 49,
       title: 'Суп куриный с домашней лапшой',
       description: '',
       price: 1100,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     }
   ]
 
@@ -745,49 +711,49 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
       title: 'Паста Карбонара',
       description: '',
       price: 1800,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 51,
       title: 'Филе судака с брокколи и соусом из шпината',
       description: '',
       price: 2900,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 52,
       title: 'Стейк из лосося с йогуртовым соусом и микс салатом',
       description: '',
       price: 3600,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 53,
       title: 'Медальоны из мраморной говядины с жареными кабачками и перечным соусом',
       description: '',
       price: 4500,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 54,
       title: 'Бефстроганов из мраморной говядины с белыми грибами и картофельным пюре',
       description: '',
       price: 2900,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 55,
       title: 'Биточки куриные с картофельным пюре и соусом из белых грибов',
       description: '',
       price: 2200,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 56,
       title: 'Пельмени с бульоном, сметаной и зеленью',
       description: '',
       price: 1400,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     }
   ]
 
@@ -797,50 +763,118 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
       title: 'Картофельное пюре',
       description: '',
       price: 600,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 58,
       title: 'Гречневая каша с грибами и луком',
       description: '',
       price: 1200,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 59,
       title: 'Картофель фри/по-деревенски',
       description: '',
       price: 600,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 60,
       title: 'Жаренный картофель с грибами и луком',
       description: '',
       price: 1200,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 61,
       title: 'Рис Басмати',
       description: '',
       price: 600,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     },
     {
       id: 62,
       title: 'Овощи гриль',
       description: '',
       price: 1200,
-      image: '/logo4.svg'
+      image: '/logo_aero3.svg'
     }
   ]
 
+  // Получение детальной информации о блюде (перенесено после определения массивов)
+  const getItemDetails = (itemId: number): ItemDetails | null => {
+    // Находим блюдо во всех массивах
+    const allItems = [...breakfastItems, ...sandwichItems, ...snacksItems, ...saladsItems, ...soupsItems, ...hotItems, ...sidesItems]
+    const item = allItems.find(i => i.id === itemId)
+    
+    if (!item) return null
+
+    // Базовая информация для всех блюд
+    const baseDetails = {
+      description: item.description || 'Вкусное блюдо от наших поваров, приготовленное из свежих ингредиентов.',
+      ingredients: 'Состав уточняется...',
+      nutrition: {
+        proteins: 15,
+        fats: 10,
+        carbs: 25,
+        calories: 250
+      },
+      weight: 200,
+      images: ['/logo_aero3.svg', '/logo_aero3.svg'] // Пока используем заглушки
+    }
+
+    // Специфичная информация для некоторых блюд
+    switch (itemId) {
+      case 1: // Каша овсяная
+        return {
+          ...baseDetails,
+          description: 'Полезная овсяная каша со свежими ягодами. Отличный выбор для здорового завтрака.',
+          ingredients: 'Овсяные хлопья, молоко/вода, свежие ягоды, мёд',
+          nutrition: { proteins: 8, fats: 5, carbs: 45, calories: 250 },
+          weight: 300
+        }
+      case 2: // Каша пшённая
+        return {
+          ...baseDetails,
+          description: 'Нежная пшённая каша с ароматным чатни из тыквы.',
+          ingredients: 'Пшено, молоко, тыква, специи, мёд',
+          nutrition: { proteins: 7, fats: 6, carbs: 40, calories: 240 },
+          weight: 280
+        }
+      case 3: // Блинчики с мясом
+        return {
+          ...baseDetails,
+          description: 'Нежные тонкие блинчики с сочной мясной начинкой и свежим микс-салатом. Идеальное сочетание вкуса и сытности.',
+          ingredients: 'Мука пшеничная, молоко, яйца, мясной фарш (говядина, свинина), лук, морковь, салат айсберг, руккола, томаты черри, огурцы',
+          nutrition: { proteins: 18, fats: 12, carbs: 35, calories: 290 },
+          weight: 250
+        }
+      case 4: // Блинчики с творогом
+        return {
+          ...baseDetails,
+          description: 'Воздушные блинчики с нежным творогом и вашим любимым топпингом.',
+          ingredients: 'Мука, молоко, яйца, творог, сметана/сгущённое молоко',
+          nutrition: { proteins: 16, fats: 8, carbs: 30, calories: 260 },
+          weight: 220
+        }
+      case 5: // Сырники
+        return {
+          ...baseDetails,
+          description: 'Классические сырники со свежими ягодами и вашим любимым соусом.',
+          ingredients: 'Творог, мука, яйца, сахар, свежие ягоды, варенье/сметана/сгущённое молоко',
+          nutrition: { proteins: 20, fats: 12, carbs: 25, calories: 280 },
+          weight: 180
+        }
+      default:
+        return baseDetails
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white">
       {/* App Bar - Sticky Header */}
-      <header className="sticky top-0 z-50 px-4 py-3" style={{ backgroundColor: '#0B73FE' }}>
+      <header className="sticky top-0 z-50 px-4 py-3 bg-primary-900">
         <div className="max-w-md mx-auto flex items-center justify-between">
           {/* Back Arrow */}
           <button 
@@ -855,13 +889,13 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <img 
-              src="/logo_aero3.svg" 
+              src="/logo_aero1.svg" 
               alt="Aero Lunch Logo" 
               className="w-8 h-8 object-contain"
             />
             <h1 className="text-xl font-bold">
-              <span style={{ color: '#FA742D' }}>Aero</span>
-              <span style={{ color: '#FFFFFF' }}> Lunch</span>
+              <span className="text-accent-500">Aero</span>
+              <span className="text-white"> Lunch</span>
             </h1>
           </div>
           
@@ -883,8 +917,8 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
               onClick={() => scrollToSection(category)}
               className={`flex-none px-6 py-2 font-medium rounded-full text-sm whitespace-nowrap transition-colors ${
                 selectedCategory === category
-                  ? 'bg-orange-500 text-white'
-                  : 'border border-orange-500 text-orange-500 hover:bg-orange-50'
+                  ? 'bg-accent-500 text-primary-900'
+                  : 'border border-accent-500 text-accent-500 hover:bg-accent-50'
               }`}
             >
               {category}
@@ -893,12 +927,12 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
         </div>
       </div>
 
-      {/* Content Area */}
-      <main className="px-4 py-6 pb-24">
+      {/* Content Area с Tailwind scroll utilities */}
+      <main className="px-4 py-6 pb-24 scroll-smooth">
         {/* Завтраки Section */}
-        <div ref={breakfastRef} className="mb-8">
+        <div id="Завтраки" className="mb-8 scroll-mt-36">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-primary-900">
               Завтрак
             </h2>
           </div>
@@ -927,7 +961,7 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
 
                 {/* Content */}
                 <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-bold text-gray-800 text-sm mb-2 leading-tight">
+                  <h3 className="font-bold text-primary-900 text-sm mb-2 leading-tight">
                     {item.title}
                   </h3>
                   
@@ -950,9 +984,9 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
         </div>
 
         {/* Сэндвичи Section */}
-        <div ref={sandwichRef} className="mb-8">
+        <div id="Сендвичи" className="mb-8 scroll-mt-36">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-primary-900">
               Сэндвичи
             </h2>
           </div>
@@ -961,8 +995,14 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
             {sandwichItems.map((item) => (
               <div
                 key={item.id}
-                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col"
+                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
                 style={{ height: '320px' }}
+                onClick={(e) => {
+                  // Не открывать модальное окно при клике на кнопку цены
+                  if (!(e.target as HTMLElement).closest('.price-button')) {
+                    openDetailModal(item)
+                  }
+                }}
               >
                 {/* Image */}
                 <div className="h-40 bg-gray-100 flex items-center justify-center">
@@ -975,7 +1015,7 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
 
                 {/* Content */}
                 <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-bold text-gray-800 text-sm mb-2 leading-tight">
+                  <h3 className="font-bold text-primary-900 text-sm mb-2 leading-tight">
                     {item.title}
                   </h3>
                   
@@ -998,9 +1038,9 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
         </div>
 
         {/* Закуски на компанию Section */}
-        <div ref={snacksRef} className="mb-8">
+        <div id="Закуски на компанию" className="mb-8 scroll-mt-36">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-primary-900">
               Закуски на компанию
             </h2>
           </div>
@@ -1009,8 +1049,14 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
             {snacksItems.map((item) => (
               <div
                 key={item.id}
-                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col"
+                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
                 style={{ height: '320px' }}
+                onClick={(e) => {
+                  // Не открывать модальное окно при клике на кнопку цены
+                  if (!(e.target as HTMLElement).closest('.price-button')) {
+                    openDetailModal(item)
+                  }
+                }}
               >
                 {/* Image */}
                 <div className="h-40 bg-gray-100 flex items-center justify-center">
@@ -1023,7 +1069,7 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
 
                 {/* Content */}
                 <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-bold text-gray-800 text-sm mb-2 leading-tight">
+                  <h3 className="font-bold text-primary-900 text-sm mb-2 leading-tight">
                     {item.title}
                   </h3>
                   
@@ -1046,9 +1092,9 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
         </div>
 
         {/* Салаты Section */}
-        <div ref={saladsRef} className="mb-8">
+        <div id="Салаты" className="mb-8 scroll-mt-36">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-primary-900">
               Салаты
             </h2>
           </div>
@@ -1057,8 +1103,14 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
             {saladsItems.map((item) => (
               <div
                 key={item.id}
-                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col"
+                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
                 style={{ height: '320px' }}
+                onClick={(e) => {
+                  // Не открывать модальное окно при клике на кнопку цены
+                  if (!(e.target as HTMLElement).closest('.price-button')) {
+                    openDetailModal(item)
+                  }
+                }}
               >
                 {/* Image */}
                 <div className="h-40 bg-gray-100 flex items-center justify-center">
@@ -1071,7 +1123,7 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
 
                 {/* Content */}
                 <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-bold text-gray-800 text-sm mb-2 leading-tight">
+                  <h3 className="font-bold text-primary-900 text-sm mb-2 leading-tight">
                     {item.title}
                   </h3>
                   
@@ -1094,9 +1146,9 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
         </div>
 
         {/* Супы Section */}
-        <div ref={soupsRef} className="mb-8">
+        <div id="Супы" className="mb-8 scroll-mt-36">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-primary-900">
               Супы
             </h2>
           </div>
@@ -1105,8 +1157,14 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
             {soupsItems.map((item) => (
               <div
                 key={item.id}
-                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col"
+                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
                 style={{ height: '320px' }}
+                onClick={(e) => {
+                  // Не открывать модальное окно при клике на кнопку цены
+                  if (!(e.target as HTMLElement).closest('.price-button')) {
+                    openDetailModal(item)
+                  }
+                }}
               >
                 {/* Image */}
                 <div className="h-40 bg-gray-100 flex items-center justify-center">
@@ -1119,7 +1177,7 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
 
                 {/* Content */}
                 <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-bold text-gray-800 text-sm mb-2 leading-tight">
+                  <h3 className="font-bold text-primary-900 text-sm mb-2 leading-tight">
                     {item.title}
                   </h3>
                   
@@ -1142,9 +1200,9 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
         </div>
 
         {/* Горячее Section */}
-        <div ref={hotRef} className="mb-8">
+        <div id="Горячее" className="mb-8 scroll-mt-36">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-primary-900">
               Горячее
             </h2>
           </div>
@@ -1153,8 +1211,14 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
             {hotItems.map((item) => (
               <div
                 key={item.id}
-                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col"
+                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
                 style={{ height: '320px' }}
+                onClick={(e) => {
+                  // Не открывать модальное окно при клике на кнопку цены
+                  if (!(e.target as HTMLElement).closest('.price-button')) {
+                    openDetailModal(item)
+                  }
+                }}
               >
                 {/* Image */}
                 <div className="h-40 bg-gray-100 flex items-center justify-center">
@@ -1167,7 +1231,7 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
 
                 {/* Content */}
                 <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-bold text-gray-800 text-sm mb-2 leading-tight">
+                  <h3 className="font-bold text-primary-900 text-sm mb-2 leading-tight">
                     {item.title}
                   </h3>
                   
@@ -1190,9 +1254,9 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
         </div>
 
         {/* Гарниры Section */}
-        <div ref={sidesRef} className="mb-8">
+        <div id="Гарниры" className="mb-8 scroll-mt-36">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-primary-900">
               Гарниры
             </h2>
           </div>
@@ -1201,8 +1265,14 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
             {sidesItems.map((item) => (
               <div
                 key={item.id}
-                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col"
+                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
                 style={{ height: '320px' }}
+                onClick={(e) => {
+                  // Не открывать модальное окно при клике на кнопку цены
+                  if (!(e.target as HTMLElement).closest('.price-button')) {
+                    openDetailModal(item)
+                  }
+                }}
               >
                 {/* Image */}
                 <div className="h-40 bg-gray-100 flex items-center justify-center">
@@ -1215,7 +1285,7 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
 
                 {/* Content */}
                 <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-bold text-gray-800 text-sm mb-2 leading-tight">
+                  <h3 className="font-bold text-primary-900 text-sm mb-2 leading-tight">
                     {item.title}
                   </h3>
                   
@@ -1242,11 +1312,8 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
       {getTotalItems() > 0 && (
         <div className="fixed bottom-4 left-4 right-4 z-50">
           <button 
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-colors flex items-center justify-between"
-            onClick={() => {
-              // Здесь будет переход к странице корзины
-              console.log('Переход к корзине', cart)
-            }}
+            className="w-full bg-accent-500 hover:bg-accent-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-colors flex items-center justify-between"
+            onClick={onNavigateToCart}
           >
             <span>Перейти в корзину</span>
             <span>{getTotalPrice()}₽</span>
@@ -1259,7 +1326,7 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50">
           <div className="bg-white rounded-t-3xl w-full max-w-md p-6 animate-slide-up">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-800">
+              <h3 className="text-xl font-bold text-primary-900">
                 {selectedItem.title}
               </h3>
               <button 
@@ -1280,10 +1347,10 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
                   <button
                     key={index}
                     onClick={() => selectVariant(variant)}
-                    className="w-full p-4 text-left border border-gray-200 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-colors"
+                    className="w-full p-4 text-left border border-gray-200 rounded-xl hover:border-accent-500 hover:bg-accent-50 transition-colors"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-gray-800 capitalize">{variant}</span>
+                      <span className="font-medium text-primary-900 capitalize">{variant}</span>
                       <span className="text-gray-600">{selectedItem.price}₽</span>
                     </div>
                   </button>
@@ -1353,14 +1420,14 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
                   {selectedDetailItem.images.map((_: string, index: number) => (
                     <div
                       key={index}
-                      className={`w-1.5 h-1.5 rounded-full ${index === currentImageIndex ? 'bg-orange-500' : 'bg-gray-300'}`}
+                      className={`w-1.5 h-1.5 rounded-full ${index === currentImageIndex ? 'bg-accent-500' : 'bg-gray-300'}`}
                     />
                   ))}
                 </div>
               </div>
 
               {/* Title and description */}
-              <h3 className="text-lg font-bold text-gray-800 mb-2">
+              <h3 className="text-lg font-bold text-primary-900 mb-2">
                 {selectedDetailItem.title}
               </h3>
               
@@ -1370,7 +1437,7 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
 
               {/* Ingredients */}
               <div className="mb-3">
-                <h4 className="font-semibold text-gray-800 mb-1 text-sm">Состав:</h4>
+                <h4 className="font-semibold text-primary-900 mb-1 text-sm">Состав:</h4>
                 <p className="text-gray-600 text-xs leading-relaxed">
                   {selectedDetailItem.ingredients}
                 </p>
@@ -1378,86 +1445,112 @@ export default function MenuPage({ onNavigateToLanding }: MenuPageProps) {
 
               {/* Nutrition info */}
               <div className="mb-4">
-                <h4 className="font-semibold text-gray-800 mb-2 text-sm">Пищевая ценность:</h4>
+                <h4 className="font-semibold text-primary-900 mb-2 text-sm">Пищевая ценность:</h4>
                 <div className="flex justify-between items-center text-xs mb-2">
                   <span className="text-gray-600">{selectedDetailItem.weight} г</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <div className="text-center">
-                    <div className="font-medium text-gray-800">Белки</div>
+                    <div className="font-medium text-primary-900">Белки</div>
                     <div className="text-gray-600">{selectedDetailItem.nutrition.proteins}</div>
                   </div>
                   <div className="text-center">
-                    <div className="font-medium text-gray-800">Жиры</div>
+                    <div className="font-medium text-primary-900">Жиры</div>
                     <div className="text-gray-600">{selectedDetailItem.nutrition.fats}</div>
                   </div>
                   <div className="text-center">
-                    <div className="font-medium text-gray-800">Углеводы</div>
+                    <div className="font-medium text-primary-900">Углеводы</div>
                     <div className="text-gray-600">{selectedDetailItem.nutrition.carbs}</div>
                   </div>
                   <div className="text-center">
-                    <div className="font-medium text-gray-800">Энерго. ценн</div>
+                    <div className="font-medium text-primary-900">Энерго. ценн</div>
                     <div className="text-gray-600">{selectedDetailItem.nutrition.calories}</div>
                   </div>
                 </div>
               </div>
 
+              {/* Variants section for items with options */}
+              {hasVariants(selectedDetailItem.id) && (
+                <div className="border-t border-gray-200 pt-3 mb-3">
+                  <h4 className="font-semibold text-primary-900 mb-2 text-sm">Выберите вариант:</h4>
+                  <div className="space-y-2">
+                    {getItemVariants(selectedDetailItem.id).map((variant, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          addToCart(selectedDetailItem, variant)
+                          closeDetailModal()
+                        }}
+                        className="w-full p-3 text-left border border-gray-200 rounded-xl hover:border-accent-500 hover:bg-accent-50 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-primary-900 capitalize text-sm">{variant}</span>
+                          <span className="text-accent-500 font-semibold">{selectedDetailItem.price} ₽</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Bottom section with price and buttons */}
               <div className="border-t border-gray-200 pt-3">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-lg font-bold text-gray-800">
-                    {selectedDetailItem.title}
-                  </span>
-                  <span className="text-lg font-bold text-orange-500">
+                <div className="flex items-center justify-end mb-3">
+                  <span className="text-lg font-bold text-accent-500">
                     {selectedDetailItem.price} ₽
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  {/* Quantity selector */}
-                  <div className="flex items-center bg-gray-100 rounded-xl overflow-hidden">
+                {/* Show regular add to cart for items without variants */}
+                {!hasVariants(selectedDetailItem.id) && (
+                  <div className="flex items-center gap-3">
+                    {/* Quantity selector */}
+                    <div className="flex items-center bg-gray-100 rounded-xl overflow-hidden">
+                      <button 
+                        onClick={() => {
+                          const currentQuantity = getCartItemQuantity(selectedDetailItem.id)
+                          if (currentQuantity > 0) {
+                            removeFromCart(selectedDetailItem.id)
+                          }
+                        }}
+                        className="p-2 hover:bg-gray-200 transition-colors"
+                      >
+                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                        </svg>
+                      </button>
+                      <div className="px-3 py-2 font-semibold text-primary-900 min-w-[40px] text-center text-sm">
+                        {getCartItemQuantity(selectedDetailItem.id)}
+                      </div>
+                      <button 
+                        onClick={() => addToCart(selectedDetailItem)}
+                        className="p-2 hover:bg-gray-200 transition-colors"
+                      >
+                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Add to cart button */}
                     <button 
                       onClick={() => {
-                        const currentQuantity = getCartItemQuantity(selectedDetailItem.id)
-                        if (currentQuantity > 0) {
-                          removeFromCart(selectedDetailItem.id)
-                        }
+                        addToCart(selectedDetailItem)
+                        closeDetailModal()
                       }}
-                      className="p-2 hover:bg-gray-200 transition-colors"
+                      className="flex-1 bg-accent-500 hover:bg-accent-600 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors text-sm"
                     >
-                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                      </svg>
-                    </button>
-                    <div className="px-3 py-2 font-semibold text-gray-800 min-w-[40px] text-center text-sm">
-                      {getCartItemQuantity(selectedDetailItem.id)}
-                    </div>
-                    <button 
-                      onClick={() => addToCart(selectedDetailItem)}
-                      className="p-2 hover:bg-gray-200 transition-colors"
-                    >
-                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
+                      Добавить в корзину
                     </button>
                   </div>
-
-                  {/* Add to cart button */}
-                  <button 
-                    onClick={() => {
-                      addToCart(selectedDetailItem)
-                      closeDetailModal()
-                    }}
-                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors text-sm"
-                  >
-                    Добавить в корзину
-                  </button>
-                </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
+
+
     </div>
   )
 } 

@@ -1,9 +1,18 @@
 import { useState, useEffect } from 'react'
-import { LoadingPage, LandingPage, MenuPage } from './components'
+import { LoadingPage, LandingPage, MenuPage, CartPage } from './components'
+
+interface CartItem {
+  id: number
+  title: string
+  price: number
+  quantity: number
+  variant?: string
+}
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState<'landing' | 'menu'>('landing')
+  const [currentPage, setCurrentPage] = useState<'landing' | 'menu' | 'cart'>('landing')
+  const [cart, setCart] = useState<CartItem[]>([])
 
   useEffect(() => {
     // Имитация загрузки
@@ -22,9 +31,22 @@ function App() {
     return <LandingPage onNavigateToMenu={() => setCurrentPage('menu')} />
   }
 
+  if (currentPage === 'cart') {
+    return (
+      <CartPage 
+        cart={cart}
+        onNavigateBack={() => setCurrentPage('menu')}
+        onUpdateCart={setCart}
+      />
+    )
+  }
+
   return (
     <MenuPage 
       onNavigateToLanding={() => setCurrentPage('landing')}
+      onNavigateToCart={() => setCurrentPage('cart')}
+      cart={cart}
+      onUpdateCart={setCart}
     />
   )
 }

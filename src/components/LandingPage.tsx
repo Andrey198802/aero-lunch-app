@@ -4,42 +4,46 @@ interface LandingPageProps {
 
 export default function LandingPage({ onNavigateToMenu }: LandingPageProps) {
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center px-6" style={{ background: 'linear-gradient(to bottom, #5BA1FF 0%, #0B73FE 100%)' }}>
-      <div className="max-w-sm mx-auto text-center">
-        {/* Top Logo - Food Icon */}
-        <div className="mb-8">
+    <div className="fit-screen safe-area-inset flex flex-col justify-between items-center px-4 sm:px-6 bg-gradient-to-b from-primary-900 to-primary-950">
+      {/* Основной контент - центрированный */}
+      <div className="flex-1 flex flex-col justify-center items-center text-center">
+        {/* Top Logo - Food Icon - Меньше */}
+        <div className="mb-2 sm:mb-3">
           <img 
             src="/logo_aero2.svg" 
             alt="Aero Lunch Food Icon" 
-            className="w-40 h-40 mx-auto mb-6 object-contain"
+            className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto mb-1 sm:mb-2 object-contain"
           />
         </div>
 
-        {/* Airplane Logo */}
-        <div className="mb-1">
+        {/* Airplane Logo - Меньше */}
+        <div className="mb-2 sm:mb-3">
           <img 
             src="/logo_aero1.svg" 
             alt="Aero Lunch Airplane" 
-            className="w-72 h-36 mx-auto mb-0 object-contain"
+            className="w-36 h-18 sm:w-44 sm:h-22 md:w-52 md:h-26 mx-auto mb-0 object-contain"
           />
         </div>
 
-        {/* Title */}
-        <div className="mb-4">
-          <h1 className="text-5xl font-bold mb-3">
-            <span className="text-orange-400">Aero</span>
+        {/* Title - В два раза больше */}
+        <div className="mb-3 sm:mb-4">
+          <h1 className="text-6xl sm:text-7xl md:text-8xl font-bold mb-1 sm:mb-2">
+            <span className="text-accent-500">Aero</span>
             <span className="text-white"> Lunch</span>
           </h1>
-          <p className="text-white text-lg font-medium opacity-90">
+          <p className="text-white text-base sm:text-lg font-medium opacity-90">
             Доставка от 30 минут
           </p>
         </div>
+      </div>
 
+      {/* Нижний блок - прижат к низу */}
+      <div className="w-full max-w-sm mx-auto text-center pb-5" style={{ paddingBottom: '20px' }}>
         {/* CTA Button */}
-        <div className="mt-16 mb-6">
+        <div className="mb-4">
           <button 
             onClick={onNavigateToMenu}
-            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xl py-4 px-12 rounded-3xl w-full max-w-xs mx-auto transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="bg-accent-500 hover:bg-accent-600 text-primary-900 font-semibold text-lg sm:text-xl py-3 sm:py-4 px-8 sm:px-12 rounded-3xl w-full max-w-xs mx-auto transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             Сделать заказ
           </button>
