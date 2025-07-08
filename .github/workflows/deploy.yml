@@ -25,11 +25,12 @@ jobs:
     - name: Build frontend
       run: npm run build
 
-    - name: Install server dependencies
-      run: cd server && npm ci
+    # Временно отключаем серверную часть
+    # - name: Install server dependencies
+    #   run: cd server && npm ci
 
-    - name: Build server
-      run: cd server && npm run build
+    # - name: Build server
+    #   run: cd server && npm run build
 
     - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.0
@@ -45,14 +46,14 @@ jobs:
           npm ci
           npm run build
           
-          # Обновляем бэкенд
-          cd server
-          npm ci
-          npm run build
+          # Временно отключаем бэкенд
+          # cd server
+          # npm ci
+          # npm run build
           
-          # Перезапускаем сервисы
-          cd ..
-          docker-compose down
-          docker-compose up -d --build
+          # Перезапускаем только фронтенд
+          # cd ..
+          # docker-compose down
+          docker-compose up -d frontend
           
-          echo "✅ Деплой завершён!" 
+          echo "✅ Деплой фронтенда завершён!" 
