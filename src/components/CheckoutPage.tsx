@@ -53,7 +53,7 @@ export default function CheckoutPage({ cart, onNavigateBack, onOrderComplete }: 
   return (
     <div className="min-h-screen bg-white">
       {/* App Bar - Sticky Header */}
-      <header className="sticky top-0 z-50 px-4 py-3" style={{ background: 'linear-gradient(to top, #0B73FE, #5BA1FF)' }}>
+      <header className="sticky top-0 z-50 fixed-header py-3" style={{ background: 'linear-gradient(to top, #0B73FE, #5BA1FF)' }}>
         <div className="max-w-md mx-auto flex items-center justify-between">
           {/* Back Arrow */}
           <button 
@@ -74,7 +74,7 @@ export default function CheckoutPage({ cart, onNavigateBack, onOrderComplete }: 
       </header>
 
       {/* Content */}
-      <main className="px-4 py-6 pb-24">
+      <main className="content-safe py-6 pb-24">
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Выбор времени доставки */}
           <div>
@@ -207,7 +207,7 @@ export default function CheckoutPage({ cart, onNavigateBack, onOrderComplete }: 
 
       {/* Order Button - Fixed at bottom */}
       <div 
-        className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 px-4 py-3"
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 fixed-bottom py-3"
         style={{ borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}
       >
         <button 

@@ -1393,7 +1393,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
   return (
     <div className="min-h-screen bg-white">
       {/* App Bar - Sticky Header */}
-      <header className="sticky top-0 z-50 px-4 py-3" style={{ background: 'linear-gradient(to top, #0B73FE, #5BA1FF)' }}>
+      <header className="sticky top-0 z-50 fixed-header py-3" style={{ background: 'linear-gradient(to top, #0B73FE, #5BA1FF)' }}>
         <div className="max-w-md mx-auto flex items-center justify-between">
           {/* Back Arrow */}
           <button 
@@ -1425,10 +1425,10 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
       </header>
 
       {/* Horizontal Categories Menu - Sticky */}
-      <div className="sticky top-[54px] z-40 px-4 py-2 bg-white">
+      <div className="sticky top-[54px] z-40 py-2 bg-white">
         <div 
           ref={categoriesMenuRef}
-          className="flex overflow-x-auto space-x-3 scrollbar-hide"
+          className="flex overflow-x-auto space-x-3 scrollbar-hide pl-4 pr-0"
         >
           {categories.map((category) => {
             // Проверяем, является ли категория одной из новых (без контента)
@@ -1456,10 +1456,10 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
       </div>
 
       {/* Content Area с Tailwind scroll utilities */}
-      <main className="px-4 py-6 pb-24 scroll-smooth">
+      <main className="py-6 pb-24 scroll-smooth">
         {/* Завтраки Section */}
         <div id="Завтраки" className="mb-4 scroll-mt-36">
-          <div className="mb-3">
+          <div className="mb-3 content-safe">
             <h2 className="text-2xl font-bold flex items-center" style={{ color: '#313131' }}>
               <img 
                 src="/Breakfast.svg" 
@@ -1471,7 +1471,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             </h2>
           </div>
 
-          <div className="flex overflow-x-auto pb-4 scrollbar-hide" style={{ gap: '10px' }}>
+          <div className="flex overflow-x-auto pb-4 scrollbar-hide pl-4 pr-0" style={{ gap: '10px' }}>
             {breakfastItems.map((item) => (
               <div
                 key={item.id}
@@ -1520,7 +1520,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
 
         {/* Сэндвичи Section */}
         <div id="Сендвичи" className="mb-8 scroll-mt-36">
-          <div className="mb-3">
+          <div className="mb-3 content-safe">
             <h2 className="text-2xl font-bold flex items-center" style={{ color: '#313131' }}>
               <img 
                 src="/Sandwiches.svg" 
@@ -1532,7 +1532,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             </h2>
           </div>
 
-          <div className="flex overflow-x-auto pb-4 scrollbar-hide" style={{ gap: '10px' }}>
+          <div className="flex overflow-x-auto pb-4 scrollbar-hide pl-4 pr-0" style={{ gap: '10px' }}>
             {sandwichItems.map((item) => (
               <div
                 key={item.id}
@@ -1581,7 +1581,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
 
         {/* Закуски на компанию Section */}
         <div id="Закуски на компанию" className="mb-4 scroll-mt-36">
-          <div className="mb-3">
+          <div className="mb-3 content-safe">
             <h2 className="text-2xl font-bold flex items-center" style={{ color: '#313131' }}>
               <img 
                 src="/Snacks.svg" 
@@ -1593,7 +1593,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             </h2>
           </div>
 
-          <div className="flex overflow-x-auto pb-4 scrollbar-hide" style={{ gap: '10px' }}>
+          <div className="flex overflow-x-auto pb-4 scrollbar-hide pl-4 pr-0" style={{ gap: '10px' }}>
             {snacksItems.map((item) => (
               <div
                 key={item.id}
@@ -1642,7 +1642,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
 
         {/* Салаты Section */}
         <div id="Салаты" className="mb-4 scroll-mt-36">
-          <div className="mb-3">
+          <div className="mb-3 content-safe">
             <h2 className="text-2xl font-bold flex items-center" style={{ color: '#313131' }}>
               <img 
                 src="/salad.svg" 
@@ -1654,7 +1654,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             </h2>
           </div>
 
-          <div className="flex overflow-x-auto pb-4 scrollbar-hide" style={{ gap: '10px' }}>
+          <div className="flex overflow-x-auto pb-4 scrollbar-hide pl-4 pr-0" style={{ gap: '10px' }}>
             {saladsItems.map((item) => (
               <div
                 key={item.id}
@@ -1703,7 +1703,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
 
         {/* Супы Section */}
         <div id="Супы" className="mb-4 scroll-mt-36">
-          <div className="mb-3">
+          <div className="mb-3 content-safe">
             <h2 className="text-2xl font-bold flex items-center" style={{ color: '#313131' }}>
               <img 
                 src="/SOUPS.png" 
@@ -1715,7 +1715,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             </h2>
           </div>
 
-          <div className="flex overflow-x-auto pb-4 scrollbar-hide" style={{ gap: '10px' }}>
+          <div className="flex overflow-x-auto pb-4 scrollbar-hide pl-4 pr-0" style={{ gap: '10px' }}>
             {soupsItems.map((item) => (
               <div
                 key={item.id}
@@ -1764,7 +1764,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
 
         {/* Горячее Section */}
         <div id="Горячее" className="mb-4 scroll-mt-36">
-          <div className="mb-3">
+          <div className="mb-3 content-safe">
             <h2 className="text-2xl font-bold flex items-center" style={{ color: '#313131' }}>
               <img 
                 src="/hot.svg" 
@@ -1776,7 +1776,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             </h2>
           </div>
 
-          <div className="flex overflow-x-auto pb-4 scrollbar-hide" style={{ gap: '10px' }}>
+          <div className="flex overflow-x-auto pb-4 scrollbar-hide pl-4 pr-0" style={{ gap: '10px' }}>
             {hotItems.map((item) => (
               <div
                 key={item.id}
@@ -1825,7 +1825,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
 
         {/* Гарниры Section */}
         <div id="Гарниры" className="mb-4 scroll-mt-36">
-          <div className="mb-3">
+          <div className="mb-3 content-safe">
             <h2 className="text-2xl font-bold flex items-center" style={{ color: '#313131' }}>
               <img 
                 src="/broccoli.svg" 
@@ -1837,7 +1837,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             </h2>
           </div>
 
-          <div className="flex overflow-x-auto pb-4 scrollbar-hide" style={{ gap: '10px' }}>
+          <div className="flex overflow-x-auto pb-4 scrollbar-hide pl-4 pr-0" style={{ gap: '10px' }}>
             {sidesItems.map((item) => (
               <div
                 key={item.id}
@@ -1888,20 +1888,21 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
       {/* Cart Button */}
       {showCartButton && (
         <div 
-          className={`fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 px-4 py-3 ${
+          className={`fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 fixed-bottom py-3 ${
             cartButtonAnimating ? 'animate-slide-down' : 'animate-slide-up'
           }`}
           style={{ borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}
         >
-          <button 
-            className="w-full text-white font-semibold transition-colors flex items-center justify-between px-6 rounded-full"
-            style={{ 
-              backgroundColor: '#1F1F1F',
-              height: '42px',
-              fontSize: '14px'
-            }}
-            onClick={onNavigateToCart}
-          >
+          <div className="content-safe">
+            <button 
+              className="w-full text-white font-semibold transition-colors flex items-center justify-between px-6 rounded-full"
+              style={{ 
+                backgroundColor: '#1F1F1F',
+                height: '42px',
+                fontSize: '14px'
+              }}
+              onClick={onNavigateToCart}
+            >
             <span>Перейти в корзину</span>
             <div className="flex items-center gap-2">
               <span>{getTotalPrice()}₽</span>
@@ -1916,6 +1917,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
               </div>
             </div>
           </button>
+          </div>
         </div>
       )}
 
