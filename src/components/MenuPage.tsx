@@ -45,8 +45,25 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedDetailItem, setSelectedDetailItem] = useState<DetailedMenuItem | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [showCartButton, setShowCartButton] = useState(false)
+  const [cartButtonAnimating, setCartButtonAnimating] = useState(false)
 
-  
+  // Управление показом кнопки корзины с анимацией
+  useEffect(() => {
+    if (getTotalItems() > 0) {
+      setShowCartButton(true)
+      setCartButtonAnimating(false)
+    } else if (showCartButton) {
+      // Запускаем анимацию исчезновения
+      setCartButtonAnimating(true)
+      // Скрываем кнопку после завершения анимации
+      setTimeout(() => {
+        setShowCartButton(false)
+        setCartButtonAnimating(false)
+      }, 400) // 400ms - длительность анимации
+    }
+  }, [cart, showCartButton])
+
   // Функции для работы с корзиной
   const addToCart = (item: { id: number; title: string; price: number }, variant?: string) => {
     const existingItem = cart.find(cartItem => cartItem.id === item.id && cartItem.variant === variant)
@@ -182,37 +199,37 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
       if (totalQuantity === 0) {
         return (
           <div className="price-button">
-            <button 
-              onClick={() => openVariantModal(item)}
-              className="w-full bg-gray-100 hover:bg-gray-200 text-primary-900 font-semibold text-sm py-2 px-3 rounded-xl transition-colors h-10 flex items-center justify-center"
-            >
-              {item.price}₽
-            </button>
+                      <button 
+            onClick={() => openVariantModal(item)}
+            className="w-full bg-gray-100 hover:bg-gray-200 text-primary-900 font-semibold text-xs py-2 px-3 rounded-full transition-colors h-10 flex items-center justify-center"
+          >
+            {item.price}₽
+          </button>
           </div>
         )
       }
       
-      return (
-        <div className="price-button">
-          <div className="flex items-center bg-white border-2 border-accent-500 rounded-xl h-10">
-            <button 
-              onClick={() => removeVariantItemFromCart(item.id)}
-              className="text-primary-900 font-bold text-lg px-3 py-2 flex-none"
-            >
-              -
-            </button>
-            <div className="flex-1 text-center text-primary-900 font-semibold text-sm">
-              {totalQuantity}
+              return (
+          <div className="price-button">
+            <div className="flex items-center bg-white border-2 rounded-full h-10" style={{ borderColor: '#FA742D' }}>
+              <button 
+                onClick={() => removeVariantItemFromCart(item.id)}
+                className="text-primary-900 font-bold text-lg px-3 py-2 flex-none"
+              >
+                -
+              </button>
+              <div className="flex-1 text-center text-primary-900 font-semibold text-xs">
+                {totalQuantity}
+              </div>
+              <button 
+                onClick={() => openVariantModal(item)}
+                className="text-primary-900 font-bold text-lg px-3 py-2 flex-none"
+              >
+                +
+              </button>
             </div>
-            <button 
-              onClick={() => openVariantModal(item)}
-              className="text-primary-900 font-bold text-lg px-3 py-2 flex-none"
-            >
-              +
-            </button>
           </div>
-        </div>
-      )
+        )
     }
     
     // Обычная логика для других товаров
@@ -223,7 +240,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
         <div className="price-button">
           <button 
             onClick={() => addToCart(item)}
-            className="w-full bg-gray-100 hover:bg-gray-200 text-primary-900 font-semibold text-sm py-2 px-3 rounded-xl transition-colors h-10 flex items-center justify-center"
+            className="w-full bg-gray-100 hover:bg-gray-200 text-primary-900 font-semibold text-xs py-2 px-3 rounded-full transition-colors h-10 flex items-center justify-center"
           >
             {item.price}₽
           </button>
@@ -233,14 +250,14 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
     
     return (
       <div className="price-button">
-        <div className="flex items-center bg-white border-2 border-accent-500 rounded-xl h-10">
+        <div className="flex items-center bg-white border-2 rounded-full h-10" style={{ borderColor: '#FA742D' }}>
           <button 
             onClick={() => removeFromCart(item.id)}
             className="text-primary-900 font-bold text-lg px-3 py-2 flex-none"
           >
             -
           </button>
-          <div className="flex-1 text-center text-primary-900 font-semibold text-sm">
+          <div className="flex-1 text-center text-primary-900 font-semibold text-xs">
             {quantity}
           </div>
           <button 
@@ -262,6 +279,9 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
   const isManualSelection = useRef(false)
   
   const categories = [
+    'Любимые',
+    'Хиты продаж',
+    'Новинки',
     'Завтраки',
     'Сендвичи',
     'Закуски на компанию',
@@ -272,33 +292,50 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
   ]
 
   // Простая функция для скролла к секции
-  // Простая функция для скролла к секции
+  // Оптимизированная функция для скролла к секции
   const scrollToSection = (category: string) => {
     // Помечаем что это ручной выбор
     isManualSelection.current = true
     setSelectedCategory(category)
     
-    // Небольшая задержка чтобы горизонтальный скролл не мешал
-    setTimeout(() => {
-      const element = document.getElementById(category)
-      if (element) {
-        element.scrollIntoView({ 
+    // Скроллим кнопку в центр горизонтального меню
+    if (categoriesMenuRef.current) {
+      const activeButton = categoriesMenuRef.current.querySelector(`[data-category="${category}"]`) as HTMLButtonElement
+      if (activeButton) {
+        activeButton.scrollIntoView({
           behavior: 'smooth',
-          block: 'start'
+          block: 'nearest',
+          inline: 'center'
         })
       }
-    }, 100)
+    }
+    
+    // Скроллим к секции
+    const element = document.getElementById(category)
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      })
+    }
+    
+    // Сбрасываем флаг через время
+    setTimeout(() => {
+      isManualSelection.current = false
+    }, 1000)
   }
 
   // Используем IntersectionObserver для отслеживания видимых секций
   useEffect(() => {
     const options = {
       root: null,
-      rootMargin: '-30% 0px -60% 0px', // Учитываем только среднюю часть экрана
-      threshold: 0
+      rootMargin: '-20% 0px -70% 0px', // Более точная зона срабатывания
+      threshold: 0.1
     }
 
     const observer = new IntersectionObserver((entries) => {
+      if (isManualSelection.current) return // Не обновляем если идет ручной скролл
+      
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           setSelectedCategory(entry.target.id)
@@ -306,7 +343,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
       })
     }, options)
 
-    // Наблюдаем за всеми секциями
+    // Наблюдаем только за секциями с контентом
     const sections = [
       'Завтраки', 'Сендвичи', 'Закуски на компанию', 
       'Салаты', 'Супы', 'Горячее', 'Гарниры'
@@ -322,43 +359,32 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
     return () => observer.disconnect()
   }, [])
 
-
-
-  // Автоматический скролл горизонтального меню к активной кнопке
+  // Автоматический скролл горизонтального меню к активной кнопке (только для автоматического изменения)
   useEffect(() => {
-    // Не скроллим горизонтальное меню если категория была выбрана кликом
-    if (!isManualSelection.current) {
-      const timer = setTimeout(() => {
-        if (categoriesMenuRef.current) {
-          const activeButton = categoriesMenuRef.current.querySelector(`[data-category="${selectedCategory}"]`) as HTMLButtonElement
-          if (activeButton) {
-            activeButton.scrollIntoView({
-              behavior: 'smooth',
-              block: 'nearest',
-              inline: 'center'
-            })
-          }
-        }
-      }, 50)
-      
-      return () => clearTimeout(timer)
+    if (!isManualSelection.current && categoriesMenuRef.current) {
+      const activeButton = categoriesMenuRef.current.querySelector(`[data-category="${selectedCategory}"]`) as HTMLButtonElement
+      if (activeButton) {
+        activeButton.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center'
+        })
+      }
     }
-    // Сбрасываем флаг после использования
-    isManualSelection.current = false
   }, [selectedCategory])
 
   const breakfastItems = [
     {
       id: 1,
-      title: 'Каша овсяная со свежими ягодами на выбор',
-      description: 'на воде\\молоке\\ альтернативном молоке',
+      title: 'Каша овсяная со свежими ягодами',
+      description: 'на воде, молоке или альтернативном молоке',
       price: 900,
       image: '/logo_aero3.svg'
     },
     {
       id: 2,
-      title: 'Каша пшённая с чатни из тыквы на выбор',
-      description: 'на молоке\\альтернативном молоке',
+      title: 'Каша пшённая с чатни из тыквы',
+      description: 'на молоке или альтернативном молоке',
       price: 900,
       image: '/logo_aero3.svg'
     },
@@ -371,15 +397,15 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
     },
     {
       id: 4,
-      title: 'Блинчики с творогом на выбор',
-      description: 'со сметаной\\сгущенным молоком',
+      title: 'Блинчики с творогом',
+      description: 'со сметаной или сгущенным молоком',
       price: 1300,
       image: '/logo_aero3.svg'
     },
     {
       id: 5,
-      title: 'Сырники со свежими ягодами на выбор',
-      description: 'вареньем из вишни\\сметаной\\сгущённым молоком',
+      title: 'Сырники со свежими ягодами',
+      description: 'с вареньем из вишни, сметаной или сгущённым молоком',
       price: 1300,
       image: '/logo_aero3.svg'
     },
@@ -441,8 +467,8 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
     },
     {
       id: 14,
-      title: 'Блинчики с маслом и ягодами, на выбор',
-      description: 'вареньем из вишни\\сметаной\\сгущённым молоком',
+      title: 'Блинчики с маслом и ягодами',
+      description: 'с вареньем из вишни, сметаной или сгущённым молоком',
       price: 900,
       image: '/logo_aero3.svg'
     }
@@ -858,6 +884,38 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
           nutrition: { proteins: 16, fats: 8, carbs: 30, calories: 260 },
           weight: 220
         }
+      case 1: // Каша овсяная с ягодами
+        return {
+          ...baseDetails,
+          description: 'Нежная овсяная каша на молоке с натуральными ягодами и медом.',
+          ingredients: 'Овсяные хлопья, молоко, свежие ягоды (клубника, черника, малина), мед, сливочное масло',
+          nutrition: { proteins: 8, fats: 6, carbs: 32, calories: 200 },
+          weight: 250
+        }
+      case 2: // Каша рисовая с изюмом
+        return {
+          ...baseDetails,
+          description: 'Сладкая рисовая каша на молоке с изюмом и корицей.',
+          ingredients: 'Рис, молоко, изюм, сахар, корица, сливочное масло, ваниль',
+          nutrition: { proteins: 6, fats: 4, carbs: 35, calories: 190 },
+          weight: 250
+        }
+      case 3: // Каша гречневая с молоком
+        return {
+          ...baseDetails,
+          description: 'Питательная гречневая каша на молоке с добавлением сливочного масла.',
+          ingredients: 'Гречка, молоко, сливочное масло, соль, сахар',
+          nutrition: { proteins: 10, fats: 8, carbs: 28, calories: 210 },
+          weight: 250
+        }
+      case 4: // Мюсли с йогуртом
+        return {
+          ...baseDetails,
+          description: 'Хрустящие мюсли с натуральным йогуртом, орехами и свежими фруктами.',
+          ingredients: 'Мюсли (овсяные хлопья, орехи, сухофрукты), йогурт натуральный, свежие фрукты, мед',
+          nutrition: { proteins: 12, fats: 10, carbs: 30, calories: 240 },
+          weight: 200
+        }
       case 5: // Сырники
         return {
           ...baseDetails,
@@ -865,6 +923,467 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
           ingredients: 'Творог, мука, яйца, сахар, свежие ягоды, варенье/сметана/сгущённое молоко',
           nutrition: { proteins: 20, fats: 12, carbs: 25, calories: 280 },
           weight: 180
+        }
+      case 6: // Яйцо пашот с микс-салатом
+        return {
+          ...baseDetails,
+          description: 'Нежное яйцо пашот с жидким желтком, подается со свежим микс-салатом.',
+          ingredients: 'Яйца куриные, салат айсберг, руккола, томаты черри, огурцы, оливковое масло',
+          nutrition: { proteins: 12, fats: 8, carbs: 5, calories: 130 },
+          weight: 150
+        }
+      case 7: // Яичница глазунья с микс-салатом
+        return {
+          ...baseDetails,
+          description: 'Классическая яичница глазунья с хрустящими краями и свежим микс-салатом.',
+          ingredients: 'Яйца куриные, сливочное масло, салат айсберг, руккола, томаты черри, огурцы',
+          nutrition: { proteins: 14, fats: 12, carbs: 4, calories: 170 },
+          weight: 160
+        }
+      case 8: // Омлет классический с микс-салатом
+        return {
+          ...baseDetails,
+          description: 'Воздушный омлет, приготовленный на сливочном масле, с нежным микс-салатом.',
+          ingredients: 'Яйца куриные, молоко, сливочное масло, салат айсберг, руккола, томаты черри',
+          nutrition: { proteins: 16, fats: 14, carbs: 3, calories: 190 },
+          weight: 180
+        }
+      case 9: // Скрэмбл с микс-салатом
+        return {
+          ...baseDetails,
+          description: 'Нежный скрэмбл из взбитых яиц, медленно приготовленный до кремовой текстуры.',
+          ingredients: 'Яйца куриные, сливки, сливочное масло, салат айсберг, руккола, зелень',
+          nutrition: { proteins: 15, fats: 16, carbs: 2, calories: 200 },
+          weight: 170
+        }
+      case 10: // Картофельные драники с лососем
+        return {
+          ...baseDetails,
+          description: 'Хрустящие картофельные драники с нежным слабосоленым лососем и сметаной.',
+          ingredients: 'Картофель, яйца, мука, лук, лосось слабосоленый, сметана, укроп',
+          nutrition: { proteins: 22, fats: 18, carbs: 25, calories: 340 },
+          weight: 220
+        }
+      case 11: // Слабосоленый лосось с жареным авокадо и яйцом пашот
+        return {
+          ...baseDetails,
+          description: 'Изысканное сочетание слабосоленого лосося, жареного авокадо и нежного яйца пашот.',
+          ingredients: 'Лосось слабосоленый, авокадо, яйца куриные, лимон, оливковое масло, микрозелень',
+          nutrition: { proteins: 28, fats: 24, carbs: 8, calories: 360 },
+          weight: 200
+        }
+      case 12: // Оладьи из кабачков с тигровыми креветками
+        return {
+          ...baseDetails,
+          description: 'Легкие оладьи из свежих кабачков с сочными тигровыми креветками и соусом ткемали.',
+          ingredients: 'Кабачки, мука, яйца, креветки тигровые, соус ткемали, зелень, специи',
+          nutrition: { proteins: 20, fats: 10, carbs: 18, calories: 230 },
+          weight: 190
+        }
+      case 13: // Домашний йогурт со свежими ягодами
+        return {
+          ...baseDetails,
+          description: 'Нежный домашний йогурт с натуральными свежими ягодами и медом.',
+          ingredients: 'Йогурт натуральный, свежие ягоды (клубника, черника, малина), мед, мята',
+          nutrition: { proteins: 8, fats: 4, carbs: 15, calories: 120 },
+          weight: 150
+        }
+      case 14: // Блинчики с маслом и ягодами
+        return {
+          ...baseDetails,
+          description: 'Тонкие блинчики со сливочным маслом, свежими ягодами и вашим любимым топпингом.',
+          ingredients: 'Мука, молоко, яйца, сливочное масло, свежие ягоды, варенье/сметана/сгущённое молоко',
+          nutrition: { proteins: 12, fats: 8, carbs: 35, calories: 250 },
+          weight: 200
+        }
+      // Сэндвичи
+      case 15: // Сэндвич с лососем и соусом из артишоков
+        return {
+          ...baseDetails,
+          description: 'Изысканный сэндвич с нежным лососем, авторским соусом из артишоков и свежими овощами.',
+          ingredients: 'Хлеб цельнозерновой, лосось слабосоленый, соус из артишоков, салат, томаты, огурцы',
+          nutrition: { proteins: 25, fats: 18, carbs: 28, calories: 360 },
+          weight: 220
+        }
+      case 16: // Сэндвич с куриным филе и соусом свит чили
+        return {
+          ...baseDetails,
+          description: 'Сочный сэндвич с нежным куриным филе, пикантным соусом свит чили и хрустящими овощами.',
+          ingredients: 'Хлеб, куриное филе, соус свит чили, салат айсберг, томаты, огурцы, лук красный',
+          nutrition: { proteins: 28, fats: 12, carbs: 32, calories: 320 },
+          weight: 250
+        }
+      case 17: // Сэндвич с ростбифом, глазуньей и горчичным соусом
+        return {
+          ...baseDetails,
+          description: 'Сытный сэндвич с сочным ростбифом, яичницей глазунья и ароматным горчичным соусом.',
+          ingredients: 'Хлеб, ростбиф, яйца, горчичный соус, салат, томаты, лук карамелизированный',
+          nutrition: { proteins: 32, fats: 20, carbs: 25, calories: 380 },
+          weight: 280
+        }
+      case 18: // Сэндвич с ветчиной и сыром
+        return {
+          ...baseDetails,
+          description: 'Классический сэндвич с ароматной ветчиной, сыром и свежими овощами.',
+          ingredients: 'Хлеб, ветчина, сыр, салат, томаты, огурцы, майонез',
+          nutrition: { proteins: 22, fats: 15, carbs: 28, calories: 310 },
+          weight: 200
+        }
+      case 19: // Чиабатта с бужениной и пикантным соусом
+        return {
+          ...baseDetails,
+          description: 'Ароматная чиабатта с нежной бужениной, пикантным соусом и свежими травами.',
+          ingredients: 'Чиабатта, буженина, пикантный соус, руккола, томаты, лук красный',
+          nutrition: { proteins: 26, fats: 18, carbs: 30, calories: 360 },
+          weight: 240
+        }
+      case 20: // Чиабатта с пастрами из индейки
+        return {
+          ...baseDetails,
+          description: 'Сочная чиабатта с пастрами из индейки, жареными кабачками и грузинским соусом сацебели.',
+          ingredients: 'Чиабатта, пастрами из индейки, кабачки жареные, соус сацебели, зелень',
+          nutrition: { proteins: 24, fats: 14, carbs: 26, calories: 300 },
+          weight: 230
+        }
+      case 21: // Круассан с лососем, огурцом и сливочным сыром
+        return {
+          ...baseDetails,
+          description: 'Воздушный круассан с нежным лососем, свежим огурцом и кремовым сливочным сыром.',
+          ingredients: 'Круассан, лосось слабосоленый, огурец, сливочный сыр, укроп, каперсы',
+          nutrition: { proteins: 20, fats: 22, carbs: 20, calories: 340 },
+          weight: 180
+        }
+      case 22: // Круассан с ветчиной и сыром
+        return {
+          ...baseDetails,
+          description: 'Классический круассан с ароматной ветчиной и расплавленным сыром.',
+          ingredients: 'Круассан, ветчина, сыр, салат, томаты',
+          nutrition: { proteins: 18, fats: 20, carbs: 22, calories: 320 },
+          weight: 160
+        }
+      case 23: // Круассан с сыром
+        return {
+          ...baseDetails,
+          description: 'Нежный круассан с расплавленным сыром и свежими травами.',
+          ingredients: 'Круассан, сыр, зелень, специи',
+          nutrition: { proteins: 12, fats: 18, carbs: 25, calories: 290 },
+          weight: 140
+        }
+      case 31: // Легкий салат с сыром фета
+        return {
+          ...baseDetails,
+          description: 'Освежающий салат с нежным сыром фета, свежими овощами и ароматными травами.',
+          ingredients: 'Салат айсберг, томаты черри, огурцы, сыр фета, красный лук, оливковое масло, лимонный сок, орегано',
+          nutrition: { proteins: 12, fats: 15, carbs: 8, calories: 210 },
+          weight: 200
+        }
+      case 32: // Салат Цезарь с цыплёнком
+        return {
+          ...baseDetails,
+          description: 'Классический салат Цезарь с нежным цыплёнком, хрустящими листьями салата, пармезаном и фирменным соусом.',
+          ingredients: 'Куриное филе, салат романо, сыр пармезан, соус цезарь, гренки, чеснок, анчоусы',
+          nutrition: { proteins: 25, fats: 18, carbs: 12, calories: 290 },
+          weight: 250
+        }
+      case 33: // Салат Цезарь с креветками
+        return {
+          ...baseDetails,
+          description: 'Изысканный салат Цезарь с сочными креветками, хрустящими листьями салата и классическим соусом.',
+          ingredients: 'Креветки тигровые, салат романо, сыр пармезан, соус цезарь, гренки, чеснок, анчоусы',
+          nutrition: { proteins: 22, fats: 16, carbs: 10, calories: 260 },
+          weight: 230
+        }
+      case 34: // Салат Цезарь с лососем
+        return {
+          ...baseDetails,
+          description: 'Премиальный салат Цезарь с нежным лососем, свежими листьями салата и авторским соусом.',
+          ingredients: 'Лосось слабосоленый, салат романо, сыр пармезан, соус цезарь, гренки, чеснок, каперсы',
+          nutrition: { proteins: 28, fats: 22, carbs: 8, calories: 340 },
+          weight: 240
+        }
+      case 35: // Салат Оливье с цыплёнком
+        return {
+          ...baseDetails,
+          description: 'Традиционный салат Оливье с нежным цыплёнком, свежими овощами и майонезной заправкой.',
+          ingredients: 'Куриное филе, картофель, морковь, яйца, огурцы маринованные, зелёный горошек, майонез',
+          nutrition: { proteins: 18, fats: 20, carbs: 15, calories: 310 },
+          weight: 280
+        }
+      case 36: // Салат Оливье с ростбифом
+        return {
+          ...baseDetails,
+          description: 'Изысканный салат Оливье с сочным ростбифом, классическими овощами и деликатной заправкой.',
+          ingredients: 'Ростбиф, картофель, морковь, яйца, огурцы маринованные, зелёный горошек, майонез',
+          nutrition: { proteins: 22, fats: 18, carbs: 14, calories: 290 },
+          weight: 270
+        }
+      case 37: // Салат Оливье с лососем
+        return {
+          ...baseDetails,
+          description: 'Премиальный салат Оливье с нежным лососем, свежими овощами и авторской заправкой.',
+          ingredients: 'Лосось слабосоленый, картофель, морковь, яйца, огурцы маринованные, зелёный горошек, майонез',
+          nutrition: { proteins: 20, fats: 24, carbs: 12, calories: 340 },
+          weight: 260
+        }
+      case 38: // Салат с жаренным авокадо, креветками и манговым соусом
+        return {
+          ...baseDetails,
+          description: 'Экзотический салат с жареным авокадо, сочными креветками Том Ям и ароматным манговым соусом.',
+          ingredients: 'Креветки тигровые, авокадо, манго, салат айсберг, руккола, соус манговый, лайм, кинза',
+          nutrition: { proteins: 24, fats: 18, carbs: 16, calories: 320 },
+          weight: 220
+        }
+      case 39: // Салат с ростбифом, корнишонами и сметанной заправкой
+        return {
+          ...baseDetails,
+          description: 'Сытный салат с сочным ростбифом, хрустящими корнишонами и нежной сметанной заправкой.',
+          ingredients: 'Ростбиф, корнишоны, салат айсберг, томаты, красный лук, сметана, горчица, зелень',
+          nutrition: { proteins: 26, fats: 16, carbs: 8, calories: 280 },
+          weight: 240
+        }
+      case 40: // Салат с печеной свеклой и битыми огурцами
+        return {
+          ...baseDetails,
+          description: 'Полезный салат с ароматной печеной свеклой, свежими огурцами и легкой заправкой.',
+          ingredients: 'Свекла печеная, огурцы свежие, грецкие орехи, сыр фета, оливковое масло, бальзамик',
+          nutrition: { proteins: 8, fats: 12, carbs: 18, calories: 200 },
+          weight: 180
+        }
+      case 41: // Тёплый салат из баклажан с соусом свит чили
+        return {
+          ...baseDetails,
+          description: 'Ароматный теплый салат из запеченных баклажанов с пикантным соусом свит чили.',
+          ingredients: 'Баклажаны, болгарский перец, лук красный, соус свит чили, кунжут, зелень',
+          nutrition: { proteins: 4, fats: 8, carbs: 22, calories: 160 },
+          weight: 200
+        }
+      case 42: // Салат из спелых томатов, сыром фета и красным луком
+        return {
+          ...baseDetails,
+          description: 'Летний салат из сочных спелых томатов с нежным сыром фета и ароматным красным луком.',
+          ingredients: 'Томаты спелые, сыр фета, лук красный, базилик, оливковое масло, бальзамический уксус',
+          nutrition: { proteins: 10, fats: 14, carbs: 12, calories: 210 },
+          weight: 190
+        }
+      // Закуски
+      case 24: // Мясное ассорти с микс-салатом
+        return {
+          ...baseDetails,
+          description: 'Изысканное мясное ассорти из отборных деликатесов с свежим микс-салатом.',
+          ingredients: 'Ветчина, салями, буженина, пастрами, салат айсберг, руккола, томаты черри, огурцы',
+          nutrition: { proteins: 35, fats: 25, carbs: 8, calories: 380 },
+          weight: 300
+        }
+      case 25: // Рыбное ассорти
+        return {
+          ...baseDetails,
+          description: 'Премиальное рыбное ассорти из свежих морепродуктов и деликатесной рыбы.',
+          ingredients: 'Лосось слабосоленый, семга, форель, икра, креветки, лимон, каперсы',
+          nutrition: { proteins: 40, fats: 30, carbs: 5, calories: 420 },
+          weight: 250
+        }
+      case 26: // Сало с солёными огурцами и зелёным луком
+        return {
+          ...baseDetails,
+          description: 'Традиционное сало с хрустящими солёными огурцами и свежим зелёным луком.',
+          ingredients: 'Сало свиное, огурцы солёные, лук зелёный, чеснок, укроп',
+          nutrition: { proteins: 8, fats: 45, carbs: 3, calories: 450 },
+          weight: 150
+        }
+      case 27: // Ассорти из свежих овощей
+        return {
+          ...baseDetails,
+          description: 'Красочное ассорти из свежих сезонных овощей с травяной заправкой.',
+          ingredients: 'Томаты, огурцы, болгарский перец, морковь, редис, зелень, оливковое масло',
+          nutrition: { proteins: 3, fats: 8, carbs: 12, calories: 120 },
+          weight: 200
+        }
+      case 28: // Сырное ассорти со свежими ягодами
+        return {
+          ...baseDetails,
+          description: 'Изысканное сырное ассорти с свежими ягодами, грецкими орехами и медом.',
+          ingredients: 'Сыр бри, камамбер, чеддер, пармезан, свежие ягоды, грецкие орехи, мед',
+          nutrition: { proteins: 25, fats: 35, carbs: 15, calories: 450 },
+          weight: 180
+        }
+      case 29: // Соленья бочковые
+        return {
+          ...baseDetails,
+          description: 'Традиционные бочковые соленья с насыщенным вкусом и хрустящей текстурой.',
+          ingredients: 'Огурцы бочковые, томаты, капуста квашеная, морковь по-корейски',
+          nutrition: { proteins: 2, fats: 1, carbs: 8, calories: 45 },
+          weight: 150
+        }
+      case 30: // Сельдь атлантическая с чесночными гренками
+        return {
+          ...baseDetails,
+          description: 'Нежная атлантическая сельдь с ароматными чесночными гренками и мини картофелем.',
+          ingredients: 'Сельдь атлантическая, картофель мини, хлеб, чеснок, сливочное масло, зелень',
+          nutrition: { proteins: 20, fats: 15, carbs: 18, calories: 280 },
+          weight: 200
+        }
+      // Супы
+      case 43: // Суп карри с тигровыми креветками
+        return {
+          ...baseDetails,
+          description: 'Ароматный суп карри на кокосовом молоке с сочными тигровыми креветками.',
+          ingredients: 'Креветки тигровые, кокосовое молоко, карри, лемонграсс, имбирь, лайм, кинза',
+          nutrition: { proteins: 25, fats: 18, carbs: 12, calories: 290 },
+          weight: 350
+        }
+      case 44: // Солянка мясная
+        return {
+          ...baseDetails,
+          description: 'Традиционная мясная солянка с копченостями, оливками и лимоном.',
+          ingredients: 'Говядина, ветчина, сосиски, оливки, каперсы, лимон, сметана, зелень',
+          nutrition: { proteins: 18, fats: 12, carbs: 8, calories: 200 },
+          weight: 350
+        }
+      case 45: // Борщ с салом и ржаными гренками
+        return {
+          ...baseDetails,
+          description: 'Классический украинский борщ с салом и ароматными ржаными гренками.',
+          ingredients: 'Свекла, капуста, морковь, лук, говядина, сало, ржаной хлеб, сметана',
+          nutrition: { proteins: 15, fats: 10, carbs: 15, calories: 200 },
+          weight: 350
+        }
+      case 46: // Уха из судака и лосося с пирожком
+        return {
+          ...baseDetails,
+          description: 'Прозрачная уха из благородной рыбы с ароматными травами и пирожком.',
+          ingredients: 'Судак, лосось, лук, морковь, картофель, лавровый лист, укроп, пирожок',
+          nutrition: { proteins: 22, fats: 8, carbs: 20, calories: 230 },
+          weight: 350
+        }
+      case 47: // Крем суп из белых грибов
+        return {
+          ...baseDetails,
+          description: 'Нежный крем-суп из белых грибов с пшеничными гренками и сливками.',
+          ingredients: 'Белые грибы, сливки, лук, картофель, пшеничные гренки, зелень',
+          nutrition: { proteins: 8, fats: 15, carbs: 12, calories: 200 },
+          weight: 300
+        }
+      case 48: // Крем суп из тыквы с креветками
+        return {
+          ...baseDetails,
+          description: 'Бархатистый крем-суп из тыквы с сочными тигровыми креветками.',
+          ingredients: 'Тыква, креветки тигровые, сливки, лук, имбирь, кокосовое молоко, тыквенные семечки',
+          nutrition: { proteins: 12, fats: 10, carbs: 18, calories: 190 },
+          weight: 300
+        }
+      case 49: // Суп куриный с домашней лапшой
+        return {
+          ...baseDetails,
+          description: 'Домашний куриный суп с нежной лапшой и ароматными овощами.',
+          ingredients: 'Курица, домашняя лапша, морковь, лук, картофель, зелень, яйца',
+          nutrition: { proteins: 15, fats: 6, carbs: 20, calories: 180 },
+          weight: 350
+        }
+      // Горячие блюда
+      case 50: // Паста Карбонара
+        return {
+          ...baseDetails,
+          description: 'Классическая итальянская паста Карбонара с беконом, яйцом и пармезаном.',
+          ingredients: 'Спагетти, бекон, яйца, сыр пармезан, сливки, чеснок, черный перец',
+          nutrition: { proteins: 20, fats: 25, carbs: 45, calories: 450 },
+          weight: 300
+        }
+      case 51: // Филе судака с брокколи
+        return {
+          ...baseDetails,
+          description: 'Нежное филе судака с брокколи и ароматным соусом из шпината.',
+          ingredients: 'Судак, брокколи, шпинат, сливки, лимон, оливковое масло, чеснок',
+          nutrition: { proteins: 28, fats: 12, carbs: 8, calories: 240 },
+          weight: 250
+        }
+      case 52: // Стейк из лосося с йогуртовым соусом
+        return {
+          ...baseDetails,
+          description: 'Сочный стейк из лосося с йогуртовым соусом и свежим микс-салатом.',
+          ingredients: 'Лосось, йогурт натуральный, огурцы, укроп, лимон, салат айсберг, руккола',
+          nutrition: { proteins: 32, fats: 20, carbs: 5, calories: 320 },
+          weight: 280
+        }
+      case 53: // Медальоны из мраморной говядины
+        return {
+          ...baseDetails,
+          description: 'Сочные медальоны из мраморной говядины с жареными кабачками и перечным соусом.',
+          ingredients: 'Говядина мраморная, кабачки, перец черный, сливки, тимьян, розмарин',
+          nutrition: { proteins: 35, fats: 25, carbs: 6, calories: 370 },
+          weight: 250
+        }
+      case 54: // Бефстроганов из мраморной говядины
+        return {
+          ...baseDetails,
+          description: 'Классический бефстроганов из мраморной говядины с белыми грибами и картофельным пюре.',
+          ingredients: 'Говядина мраморная, белые грибы, сметана, лук, картофель, сливочное масло',
+          nutrition: { proteins: 30, fats: 20, carbs: 25, calories: 380 },
+          weight: 350
+        }
+      case 55: // Биточки куриные с картофельным пюре
+        return {
+          ...baseDetails,
+          description: 'Нежные куриные биточки с воздушным картофельным пюре и соусом из белых грибов.',
+          ingredients: 'Куриное филе, картофель, белые грибы, сливки, сливочное масло, яйца',
+          nutrition: { proteins: 25, fats: 15, carbs: 30, calories: 330 },
+          weight: 300
+        }
+      case 56: // Пельмени с бульоном
+        return {
+          ...baseDetails,
+          description: 'Домашние пельмени в ароматном бульоне со сметаной и свежей зеленью.',
+          ingredients: 'Пельмени (говядина, свинина), бульон мясной, сметана, укроп, петрушка',
+          nutrition: { proteins: 18, fats: 12, carbs: 35, calories: 300 },
+          weight: 350
+        }
+      // Гарниры
+      case 57: // Картофельное пюре
+        return {
+          ...baseDetails,
+          description: 'Воздушное картофельное пюре на сливочном масле с молоком.',
+          ingredients: 'Картофель, сливочное масло, молоко, соль, мускатный орех',
+          nutrition: { proteins: 4, fats: 8, carbs: 25, calories: 170 },
+          weight: 200
+        }
+      case 58: // Гречневая каша с грибами и луком
+        return {
+          ...baseDetails,
+          description: 'Ароматная гречневая каша с жареными грибами и карамелизированным луком.',
+          ingredients: 'Гречка, шампиньоны, лук, сливочное масло, зелень, специи',
+          nutrition: { proteins: 8, fats: 6, carbs: 30, calories: 200 },
+          weight: 250
+        }
+      case 59: // Картофель фри/по-деревенски
+        return {
+          ...baseDetails,
+          description: 'Хрустящий картофель фри или по-деревенски с золотистой корочкой.',
+          ingredients: 'Картофель, растительное масло, соль, специи, розмарин',
+          nutrition: { proteins: 3, fats: 12, carbs: 28, calories: 220 },
+          weight: 200
+        }
+      case 60: // Жареный картофель с грибами и луком
+        return {
+          ...baseDetails,
+          description: 'Ароматный жареный картофель с грибами и золотистым луком.',
+          ingredients: 'Картофель, шампиньоны, лук, растительное масло, зелень, специи',
+          nutrition: { proteins: 5, fats: 10, carbs: 30, calories: 210 },
+          weight: 250
+        }
+      case 61: // Рис Басмати
+        return {
+          ...baseDetails,
+          description: 'Ароматный рис Басмати, приготовленный на пару с тонкими специями.',
+          ingredients: 'Рис Басмати, сливочное масло, соль, куркума, кардамон',
+          nutrition: { proteins: 6, fats: 4, carbs: 35, calories: 190 },
+          weight: 200
+        }
+      case 62: // Овощи гриль
+        return {
+          ...baseDetails,
+          description: 'Сезонные овощи гриль с ароматными травами и оливковым маслом.',
+          ingredients: 'Кабачки, баклажаны, болгарский перец, томаты, лук, оливковое масло, тимьян',
+          nutrition: { proteins: 4, fats: 8, carbs: 15, calories: 130 },
+          weight: 200
         }
       default:
         return baseDetails
@@ -874,7 +1393,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
   return (
     <div className="min-h-screen bg-white">
       {/* App Bar - Sticky Header */}
-      <header className="sticky top-0 z-50 px-4 py-3 bg-primary-900">
+      <header className="sticky top-0 z-50 px-4 py-3" style={{ background: 'linear-gradient(to top, #0B73FE, #5BA1FF)' }}>
         <div className="max-w-md mx-auto flex items-center justify-between">
           {/* Back Arrow */}
           <button 
@@ -891,10 +1410,11 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             <img 
               src="/logo_aero1.svg" 
               alt="Aero Lunch Logo" 
-              className="w-8 h-8 object-contain"
+              className="object-contain"
+              style={{ width: '40px', height: '26px' }}
             />
-            <h1 className="text-xl font-bold">
-              <span className="text-accent-500">Aero</span>
+            <h1 className="font-bold" style={{ fontSize: '20px' }}>
+              <span style={{ color: '#FA742D' }}>Aero</span>
               <span className="text-white"> Lunch</span>
             </h1>
           </div>
@@ -905,34 +1425,48 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
       </header>
 
       {/* Horizontal Categories Menu - Sticky */}
-      <div className="sticky top-[56px] z-40 px-4 py-2 bg-white border-b border-gray-200">
+      <div className="sticky top-[54px] z-40 px-4 py-2 bg-white">
         <div 
           ref={categoriesMenuRef}
           className="flex overflow-x-auto space-x-3 scrollbar-hide"
         >
-          {categories.map((category) => (
-            <button
-              key={category}
-              data-category={category}
-              onClick={() => scrollToSection(category)}
-              className={`flex-none px-6 py-2 font-medium rounded-full text-sm whitespace-nowrap transition-colors ${
-                selectedCategory === category
-                  ? 'bg-accent-500 text-primary-900'
-                  : 'border border-accent-500 text-accent-500 hover:bg-accent-50'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
+          {categories.map((category) => {
+            // Проверяем, является ли категория одной из новых (без контента)
+            const isNewCategory = ['Любимые', 'Хиты продаж', 'Новинки'].includes(category)
+            
+            return (
+              <button
+                key={category}
+                data-category={category}
+                onClick={() => isNewCategory ? null : scrollToSection(category)}
+                className={`flex-none px-6 py-2 font-medium rounded-full text-sm whitespace-nowrap transition-colors ${
+                  selectedCategory === category
+                    ? 'bg-primary-900 text-white'
+                    : isNewCategory 
+                      ? 'border border-gray-300 text-gray-400 cursor-not-allowed'
+                      : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                }`}
+                disabled={isNewCategory}
+              >
+                {category}
+              </button>
+            )
+          })}
         </div>
       </div>
 
       {/* Content Area с Tailwind scroll utilities */}
       <main className="px-4 py-6 pb-24 scroll-smooth">
         {/* Завтраки Section */}
-        <div id="Завтраки" className="mb-8 scroll-mt-36">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-primary-900">
+        <div id="Завтраки" className="mb-4 scroll-mt-36">
+          <div className="mb-3">
+            <h2 className="text-2xl font-bold flex items-center" style={{ color: '#313131' }}>
+              <img 
+                src="/Breakfast.svg" 
+                alt="Завтрак" 
+                className="mr-3 object-contain"
+                style={{ width: '37px', height: '33px' }}
+              />
               Завтрак
             </h2>
           </div>
@@ -941,8 +1475,8 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             {breakfastItems.map((item) => (
               <div
                 key={item.id}
-                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
-                style={{ height: '320px' }}
+                className="flex-none bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
+                style={{ width: '170px', height: '300px' }}
                 onClick={(e) => {
                   // Не открывать модальное окно при клике на кнопку цены
                   if (!(e.target as HTMLElement).closest('.price-button')) {
@@ -950,31 +1484,32 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                   }
                 }}
               >
-                {/* Image */}
-                <div className="h-40 bg-gray-100 flex items-center justify-center">
+                {/* Image - увеличенная зона */}
+                <div className="bg-gray-100 flex items-center justify-center" style={{ height: '150px' }}>
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-32 h-32 object-contain opacity-60"
+                    className="object-contain opacity-60"
+                    style={{ width: '43px', height: '40px' }}
                   />
                 </div>
 
-                {/* Content */}
-                <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-bold text-primary-900 text-sm mb-2 leading-tight">
-                    {item.title}
-                  </h3>
-                  
-                  <div className="flex-1">
+                {/* Content - фиксированная высота */}
+                <div className="p-3 flex flex-col" style={{ height: '150px' }}>
+                  <div style={{ height: '70px' }}>
+                    <h3 className="font-bold text-primary-900 mb-1 leading-tight" style={{ fontSize: '12px' }}>
+                      {item.title}
+                    </h3>
+                    
                     {item.description && (
-                      <p className="text-gray-600 text-xs leading-relaxed">
+                      <p className="text-gray-600 leading-tight" style={{ fontSize: '12px' }}>
                         {item.description}
                       </p>
                     )}
                   </div>
 
-                  {/* Price Button */}
-                  <div className="mt-3" style={{ paddingBottom: '10px' }}>
+                  {/* Price Button - в нижней части */}
+                  <div className="mt-auto">
                     <PriceButton item={item} />
                   </div>
                 </div>
@@ -985,8 +1520,14 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
 
         {/* Сэндвичи Section */}
         <div id="Сендвичи" className="mb-8 scroll-mt-36">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-primary-900">
+          <div className="mb-3">
+            <h2 className="text-2xl font-bold flex items-center" style={{ color: '#313131' }}>
+              <img 
+                src="/Sandwiches.svg" 
+                alt="Сэндвичи" 
+                className="mr-3 object-contain"
+                style={{ width: '37px', height: '33px' }}
+              />
               Сэндвичи
             </h2>
           </div>
@@ -995,8 +1536,8 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             {sandwichItems.map((item) => (
               <div
                 key={item.id}
-                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
-                style={{ height: '320px' }}
+                className="flex-none bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
+                style={{ width: '170px', height: '300px' }}
                 onClick={(e) => {
                   // Не открывать модальное окно при клике на кнопку цены
                   if (!(e.target as HTMLElement).closest('.price-button')) {
@@ -1004,31 +1545,32 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                   }
                 }}
               >
-                {/* Image */}
-                <div className="h-40 bg-gray-100 flex items-center justify-center">
+                {/* Image - увеличенная зона */}
+                <div className="bg-gray-100 flex items-center justify-center" style={{ height: '150px' }}>
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-32 h-32 object-contain opacity-60"
+                    className="object-contain opacity-60"
+                    style={{ width: '43px', height: '40px' }}
                   />
                 </div>
 
-                {/* Content */}
-                <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-bold text-primary-900 text-sm mb-2 leading-tight">
-                    {item.title}
-                  </h3>
-                  
-                  <div className="flex-1">
+                {/* Content - фиксированная высота */}
+                <div className="p-3 flex flex-col" style={{ height: '150px' }}>
+                  <div style={{ height: '70px' }}>
+                    <h3 className="font-bold text-primary-900 mb-1 leading-tight" style={{ fontSize: '12px' }}>
+                      {item.title}
+                    </h3>
+                    
                     {item.description && (
-                      <p className="text-gray-600 text-xs leading-relaxed">
+                      <p className="text-gray-600 leading-tight" style={{ fontSize: '12px' }}>
                         {item.description}
                       </p>
                     )}
                   </div>
 
-                  {/* Price Button */}
-                  <div className="mt-3" style={{ paddingBottom: '10px' }}>
+                  {/* Price Button - в нижней части */}
+                  <div className="mt-auto">
                     <PriceButton item={item} />
                   </div>
                 </div>
@@ -1038,9 +1580,15 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
         </div>
 
         {/* Закуски на компанию Section */}
-        <div id="Закуски на компанию" className="mb-8 scroll-mt-36">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-primary-900">
+        <div id="Закуски на компанию" className="mb-4 scroll-mt-36">
+          <div className="mb-3">
+            <h2 className="text-2xl font-bold flex items-center" style={{ color: '#313131' }}>
+              <img 
+                src="/Snacks.svg" 
+                alt="Закуски на компанию" 
+                className="mr-3 object-contain"
+                style={{ width: '37px', height: '33px' }}
+              />
               Закуски на компанию
             </h2>
           </div>
@@ -1049,8 +1597,8 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             {snacksItems.map((item) => (
               <div
                 key={item.id}
-                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
-                style={{ height: '320px' }}
+                className="flex-none bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
+                style={{ width: '170px', height: '300px' }}
                 onClick={(e) => {
                   // Не открывать модальное окно при клике на кнопку цены
                   if (!(e.target as HTMLElement).closest('.price-button')) {
@@ -1058,31 +1606,32 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                   }
                 }}
               >
-                {/* Image */}
-                <div className="h-40 bg-gray-100 flex items-center justify-center">
+                {/* Image - увеличенная зона */}
+                <div className="bg-gray-100 flex items-center justify-center" style={{ height: '150px' }}>
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-32 h-32 object-contain opacity-60"
+                    className="object-contain opacity-60"
+                    style={{ width: '43px', height: '40px' }}
                   />
                 </div>
 
-                {/* Content */}
-                <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-bold text-primary-900 text-sm mb-2 leading-tight">
-                    {item.title}
-                  </h3>
-                  
-                  <div className="flex-1">
+                {/* Content - фиксированная высота */}
+                <div className="p-3 flex flex-col" style={{ height: '150px' }}>
+                  <div style={{ height: '70px' }}>
+                    <h3 className="font-bold text-primary-900 mb-1 leading-tight" style={{ fontSize: '12px' }}>
+                      {item.title}
+                    </h3>
+                    
                     {item.description && (
-                      <p className="text-gray-600 text-xs leading-relaxed">
+                      <p className="text-gray-600 leading-tight" style={{ fontSize: '12px' }}>
                         {item.description}
                       </p>
                     )}
                   </div>
 
-                  {/* Price Button */}
-                  <div className="mt-3" style={{ paddingBottom: '10px' }}>
+                  {/* Price Button - в нижней части */}
+                  <div className="mt-auto">
                     <PriceButton item={item} />
                   </div>
                 </div>
@@ -1092,9 +1641,15 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
         </div>
 
         {/* Салаты Section */}
-        <div id="Салаты" className="mb-8 scroll-mt-36">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-primary-900">
+        <div id="Салаты" className="mb-4 scroll-mt-36">
+          <div className="mb-3">
+            <h2 className="text-2xl font-bold flex items-center" style={{ color: '#313131' }}>
+              <img 
+                src="/salad.svg" 
+                alt="Салаты" 
+                className="mr-3 object-contain"
+                style={{ width: '37px', height: '33px' }}
+              />
               Салаты
             </h2>
           </div>
@@ -1103,8 +1658,8 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             {saladsItems.map((item) => (
               <div
                 key={item.id}
-                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
-                style={{ height: '320px' }}
+                className="flex-none bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
+                style={{ width: '170px', height: '300px' }}
                 onClick={(e) => {
                   // Не открывать модальное окно при клике на кнопку цены
                   if (!(e.target as HTMLElement).closest('.price-button')) {
@@ -1112,31 +1667,32 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                   }
                 }}
               >
-                {/* Image */}
-                <div className="h-40 bg-gray-100 flex items-center justify-center">
+                {/* Image - увеличенная зона */}
+                <div className="bg-gray-100 flex items-center justify-center" style={{ height: '150px' }}>
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-32 h-32 object-contain opacity-60"
+                    className="object-contain opacity-60"
+                    style={{ width: '43px', height: '40px' }}
                   />
                 </div>
 
-                {/* Content */}
-                <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-bold text-primary-900 text-sm mb-2 leading-tight">
-                    {item.title}
-                  </h3>
-                  
-                  <div className="flex-1">
+                {/* Content - фиксированная высота */}
+                <div className="p-3 flex flex-col" style={{ height: '150px' }}>
+                  <div style={{ height: '70px' }}>
+                    <h3 className="font-bold text-primary-900 mb-1 leading-tight" style={{ fontSize: '12px' }}>
+                      {item.title}
+                    </h3>
+                    
                     {item.description && (
-                      <p className="text-gray-600 text-xs leading-relaxed">
+                      <p className="text-gray-600 leading-tight" style={{ fontSize: '12px' }}>
                         {item.description}
                       </p>
                     )}
                   </div>
 
-                  {/* Price Button */}
-                  <div className="mt-3" style={{ paddingBottom: '10px' }}>
+                  {/* Price Button - в нижней части */}
+                  <div className="mt-auto">
                     <PriceButton item={item} />
                   </div>
                 </div>
@@ -1146,9 +1702,15 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
         </div>
 
         {/* Супы Section */}
-        <div id="Супы" className="mb-8 scroll-mt-36">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-primary-900">
+        <div id="Супы" className="mb-4 scroll-mt-36">
+          <div className="mb-3">
+            <h2 className="text-2xl font-bold flex items-center" style={{ color: '#313131' }}>
+              <img 
+                src="/SOUPS.png" 
+                alt="Супы" 
+                className="mr-3 object-contain"
+                style={{ width: '37px', height: '33px' }}
+              />
               Супы
             </h2>
           </div>
@@ -1157,8 +1719,8 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             {soupsItems.map((item) => (
               <div
                 key={item.id}
-                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
-                style={{ height: '320px' }}
+                className="flex-none bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
+                style={{ width: '170px', height: '300px' }}
                 onClick={(e) => {
                   // Не открывать модальное окно при клике на кнопку цены
                   if (!(e.target as HTMLElement).closest('.price-button')) {
@@ -1166,31 +1728,32 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                   }
                 }}
               >
-                {/* Image */}
-                <div className="h-40 bg-gray-100 flex items-center justify-center">
+                {/* Image - увеличенная зона */}
+                <div className="bg-gray-100 flex items-center justify-center" style={{ height: '150px' }}>
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-32 h-32 object-contain opacity-60"
+                    className="object-contain opacity-60"
+                    style={{ width: '43px', height: '40px' }}
                   />
                 </div>
 
-                {/* Content */}
-                <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-bold text-primary-900 text-sm mb-2 leading-tight">
-                    {item.title}
-                  </h3>
-                  
-                  <div className="flex-1">
+                {/* Content - фиксированная высота */}
+                <div className="p-3 flex flex-col" style={{ height: '150px' }}>
+                  <div style={{ height: '70px' }}>
+                    <h3 className="font-bold text-primary-900 mb-1 leading-tight" style={{ fontSize: '12px' }}>
+                      {item.title}
+                    </h3>
+                    
                     {item.description && (
-                      <p className="text-gray-600 text-xs leading-relaxed">
+                      <p className="text-gray-600 leading-tight" style={{ fontSize: '12px' }}>
                         {item.description}
                       </p>
                     )}
                   </div>
 
-                  {/* Price Button */}
-                  <div className="mt-3" style={{ paddingBottom: '10px' }}>
+                  {/* Price Button - в нижней части */}
+                  <div className="mt-auto">
                     <PriceButton item={item} />
                   </div>
                 </div>
@@ -1200,9 +1763,15 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
         </div>
 
         {/* Горячее Section */}
-        <div id="Горячее" className="mb-8 scroll-mt-36">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-primary-900">
+        <div id="Горячее" className="mb-4 scroll-mt-36">
+          <div className="mb-3">
+            <h2 className="text-2xl font-bold flex items-center" style={{ color: '#313131' }}>
+              <img 
+                src="/hot.svg" 
+                alt="Горячее" 
+                className="mr-3 object-contain"
+                style={{ width: '37px', height: '33px' }}
+              />
               Горячее
             </h2>
           </div>
@@ -1211,8 +1780,8 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             {hotItems.map((item) => (
               <div
                 key={item.id}
-                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
-                style={{ height: '320px' }}
+                className="flex-none bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
+                style={{ width: '170px', height: '300px' }}
                 onClick={(e) => {
                   // Не открывать модальное окно при клике на кнопку цены
                   if (!(e.target as HTMLElement).closest('.price-button')) {
@@ -1220,31 +1789,32 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                   }
                 }}
               >
-                {/* Image */}
-                <div className="h-40 bg-gray-100 flex items-center justify-center">
+                {/* Image - увеличенная зона */}
+                <div className="bg-gray-100 flex items-center justify-center" style={{ height: '150px' }}>
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-32 h-32 object-contain opacity-60"
+                    className="object-contain opacity-60"
+                    style={{ width: '43px', height: '40px' }}
                   />
                 </div>
 
-                {/* Content */}
-                <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-bold text-primary-900 text-sm mb-2 leading-tight">
-                    {item.title}
-                  </h3>
-                  
-                  <div className="flex-1">
+                {/* Content - фиксированная высота */}
+                <div className="p-3 flex flex-col" style={{ height: '150px' }}>
+                  <div style={{ height: '70px' }}>
+                    <h3 className="font-bold text-primary-900 mb-1 leading-tight" style={{ fontSize: '12px' }}>
+                      {item.title}
+                    </h3>
+                    
                     {item.description && (
-                      <p className="text-gray-600 text-xs leading-relaxed">
+                      <p className="text-gray-600 leading-tight" style={{ fontSize: '12px' }}>
                         {item.description}
                       </p>
                     )}
                   </div>
 
-                  {/* Price Button */}
-                  <div className="mt-3" style={{ paddingBottom: '10px' }}>
+                  {/* Price Button - в нижней части */}
+                  <div className="mt-auto">
                     <PriceButton item={item} />
                   </div>
                 </div>
@@ -1254,9 +1824,15 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
         </div>
 
         {/* Гарниры Section */}
-        <div id="Гарниры" className="mb-8 scroll-mt-36">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-primary-900">
+        <div id="Гарниры" className="mb-4 scroll-mt-36">
+          <div className="mb-3">
+            <h2 className="text-2xl font-bold flex items-center" style={{ color: '#313131' }}>
+              <img 
+                src="/broccoli.svg" 
+                alt="Гарниры" 
+                className="mr-3 object-contain"
+                style={{ width: '37px', height: '33px' }}
+              />
               Гарниры
             </h2>
           </div>
@@ -1265,8 +1841,8 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             {sidesItems.map((item) => (
               <div
                 key={item.id}
-                className="flex-none w-52 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
-                style={{ height: '320px' }}
+                className="flex-none bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
+                style={{ width: '170px', height: '300px' }}
                 onClick={(e) => {
                   // Не открывать модальное окно при клике на кнопку цены
                   if (!(e.target as HTMLElement).closest('.price-button')) {
@@ -1274,31 +1850,32 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                   }
                 }}
               >
-                {/* Image */}
-                <div className="h-40 bg-gray-100 flex items-center justify-center">
+                {/* Image - увеличенная зона */}
+                <div className="bg-gray-100 flex items-center justify-center" style={{ height: '150px' }}>
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-32 h-32 object-contain opacity-60"
+                    className="object-contain opacity-60"
+                    style={{ width: '43px', height: '40px' }}
                   />
                 </div>
 
-                {/* Content */}
-                <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-bold text-primary-900 text-sm mb-2 leading-tight">
-                    {item.title}
-                  </h3>
-                  
-                  <div className="flex-1">
+                {/* Content - фиксированная высота */}
+                <div className="p-3 flex flex-col" style={{ height: '150px' }}>
+                  <div style={{ height: '70px' }}>
+                    <h3 className="font-bold text-primary-900 mb-1 leading-tight" style={{ fontSize: '12px' }}>
+                      {item.title}
+                    </h3>
+                    
                     {item.description && (
-                      <p className="text-gray-600 text-xs leading-relaxed">
+                      <p className="text-gray-600 leading-tight" style={{ fontSize: '12px' }}>
                         {item.description}
                       </p>
                     )}
                   </div>
 
-                  {/* Price Button */}
-                  <div className="mt-3" style={{ paddingBottom: '10px' }}>
+                  {/* Price Button - в нижней части */}
+                  <div className="mt-auto">
                     <PriceButton item={item} />
                   </div>
                 </div>
@@ -1309,14 +1886,35 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
       </main>
 
       {/* Cart Button */}
-      {getTotalItems() > 0 && (
-        <div className="fixed bottom-4 left-4 right-4 z-50">
+      {showCartButton && (
+        <div 
+          className={`fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 px-4 py-3 ${
+            cartButtonAnimating ? 'animate-slide-down' : 'animate-slide-up'
+          }`}
+          style={{ borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}
+        >
           <button 
-            className="w-full bg-accent-500 hover:bg-accent-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-colors flex items-center justify-between"
+            className="w-full text-white font-semibold transition-colors flex items-center justify-between px-6 rounded-full"
+            style={{ 
+              backgroundColor: '#1F1F1F',
+              height: '42px',
+              fontSize: '14px'
+            }}
             onClick={onNavigateToCart}
           >
             <span>Перейти в корзину</span>
-            <span>{getTotalPrice()}₽</span>
+            <div className="flex items-center gap-2">
+              <span>{getTotalPrice()}₽</span>
+              <div 
+                className="flex items-center justify-center text-white font-semibold rounded-full min-w-[24px] h-6 px-2"
+                style={{ 
+                  backgroundColor: '#FA742D',
+                  fontSize: '12px'
+                }}
+              >
+                {getTotalItems()}
+              </div>
+            </div>
           </button>
         </div>
       )}
@@ -1347,7 +1945,15 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                   <button
                     key={index}
                     onClick={() => selectVariant(variant)}
-                    className="w-full p-4 text-left border border-gray-200 rounded-xl hover:border-accent-500 hover:bg-accent-50 transition-colors"
+                    className="w-full p-4 text-left border border-gray-200 rounded-xl transition-colors"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#FA742D';
+                  e.currentTarget.style.backgroundColor = '#FFF5F0';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#E5E7EB';
+                  e.currentTarget.style.backgroundColor = 'white';
+                }}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-primary-900 capitalize">{variant}</span>
@@ -1363,80 +1969,155 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
 
       {/* Detail Modal */}
       {showDetailModal && selectedDetailItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50">
-          <div className="bg-white rounded-t-3xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-slide-up">
-            {/* Header with close button */}
-            <div className="sticky top-0 bg-white p-3 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="w-8 h-1 bg-gray-300 rounded-full mx-auto"></div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50 modal-overlay">
+          <div 
+            className="bg-white rounded-t-3xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-slide-up"
+            onTouchStart={(e) => {
+              // Добавляем обработку свайпа для всех карточек
+              const touch = e.touches[0]
+              const startY = touch.clientY
+              let currentY = startY
+              const modalElement = e.currentTarget as HTMLElement
+              
+              const handleTouchMove = (e: TouchEvent) => {
+                const touch = e.touches[0]
+                currentY = touch.clientY
+                const deltaY = currentY - startY
+                
+                // Только если свайп вниз и прокрутка вверху
+                if (deltaY > 0 && modalElement.scrollTop === 0) {
+                  e.preventDefault()
+                  
+                  // Добавляем визуальную обратную связь - плавное смещение
+                  const translateY = Math.min(deltaY * 0.5, 50) // Ограничиваем максимальное смещение
+                  modalElement.style.transform = `translateY(${translateY}px)`
+                  modalElement.style.transition = 'none'
+                  
+                  // Добавляем прозрачность фона
+                  const overlay = document.querySelector('.modal-overlay') as HTMLElement
+                  if (overlay) {
+                    const opacity = Math.max(0.5, 1 - deltaY * 0.003)
+                    overlay.style.backgroundColor = `rgba(0, 0, 0, ${opacity})`
+                  }
+                }
+              }
+              
+              const handleTouchEnd = () => {
+                const deltaY = currentY - startY
+                
+                // Восстанавливаем плавные переходы
+                modalElement.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                
+                const overlay = document.querySelector('.modal-overlay') as HTMLElement
+                if (overlay) {
+                  overlay.style.transition = 'background-color 0.3s ease'
+                }
+                
+                // Если свайп вниз больше 100px - закрываем модальное окно
+                if (deltaY > 100) {
+                  modalElement.style.transform = 'translateY(100%)'
+                  if (overlay) {
+                    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0)'
+                  }
+                  setTimeout(() => {
+                    closeDetailModal()
+                  }, 300)
+                } else {
+                  // Возвращаем в исходное положение
+                  modalElement.style.transform = 'translateY(0)'
+                  if (overlay) {
+                    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'
+                  }
+                }
+                
+                document.removeEventListener('touchmove', handleTouchMove)
+                document.removeEventListener('touchend', handleTouchEnd)
+              }
+              
+              document.addEventListener('touchmove', handleTouchMove, { passive: false })
+              document.addEventListener('touchend', handleTouchEnd)
+            }}
+          >
+            {/* Image Swiper - Full width at top */}
+            <div className="relative mb-3">
+              <div 
+                className="h-64 bg-gray-100 flex items-center justify-center overflow-hidden touch-pan-x relative"
+                onTouchStart={(e) => {
+                  const touch = e.touches[0]
+                  const startX = touch.clientX
+                  
+                  const handleTouchMove = (e: TouchEvent) => {
+                    const touch = e.touches[0]
+                    const deltaX = touch.clientX - startX
+                    
+                    if (Math.abs(deltaX) > 50) {
+                      if (deltaX > 0 && currentImageIndex > 0) {
+                        setCurrentImageIndex(currentImageIndex - 1)
+                      } else if (deltaX < 0 && currentImageIndex < selectedDetailItem.images.length - 1) {
+                        setCurrentImageIndex(currentImageIndex + 1)
+                      }
+                      document.removeEventListener('touchmove', handleTouchMove)
+                    }
+                  }
+                  
+                  document.addEventListener('touchmove', handleTouchMove)
+                  document.addEventListener('touchend', () => {
+                    document.removeEventListener('touchmove', handleTouchMove)
+                  }, { once: true })
+                }}
+              >
+                <img
+                  src={selectedDetailItem.images[currentImageIndex]}
+                  alt={selectedDetailItem.title}
+                  className="w-48 h-48 object-contain opacity-60"
+                />
+                
+                {/* Close button overlay */}
                 <button 
                   onClick={closeDetailModal}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="absolute top-3 right-3 w-8 h-8 bg-white bg-opacity-80 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-800 hover:bg-opacity-100 transition-all"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
+                
+                {/* Drag indicator */}
+                <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-white bg-opacity-60 rounded-full"></div>
+              </div>
+              
+              {/* Dots indicator */}
+              <div className="flex justify-center mt-2 space-x-1">
+                {selectedDetailItem.images.map((_: string, index: number) => (
+                  <div
+                    key={index}
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ 
+                      backgroundColor: index === currentImageIndex ? '#FA742D' : '#D1D5DB' 
+                    }}
+                  />
+                ))}
               </div>
             </div>
 
-            {/* Image Swiper */}
-            <div className="px-3 py-2">
-              <div className="relative mb-3">
-                <div 
-                  className="h-40 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden touch-pan-x"
-                  onTouchStart={(e) => {
-                    const touch = e.touches[0]
-                    const startX = touch.clientX
-                    
-                    const handleTouchMove = (e: TouchEvent) => {
-                      const touch = e.touches[0]
-                      const deltaX = touch.clientX - startX
-                      
-                      if (Math.abs(deltaX) > 50) {
-                        if (deltaX > 0 && currentImageIndex > 0) {
-                          setCurrentImageIndex(currentImageIndex - 1)
-                        } else if (deltaX < 0 && currentImageIndex < selectedDetailItem.images.length - 1) {
-                          setCurrentImageIndex(currentImageIndex + 1)
-                        }
-                        document.removeEventListener('touchmove', handleTouchMove)
-                      }
-                    }
-                    
-                    document.addEventListener('touchmove', handleTouchMove)
-                    document.addEventListener('touchend', () => {
-                      document.removeEventListener('touchmove', handleTouchMove)
-                    }, { once: true })
-                  }}
-                >
-                  <img
-                    src={selectedDetailItem.images[currentImageIndex]}
-                    alt={selectedDetailItem.title}
-                    className="w-32 h-32 object-contain opacity-60"
-                  />
-                </div>
-                {/* Dots indicator */}
-                <div className="flex justify-center mt-2 space-x-1">
-                  {selectedDetailItem.images.map((_: string, index: number) => (
-                    <div
-                      key={index}
-                      className={`w-1.5 h-1.5 rounded-full ${index === currentImageIndex ? 'bg-accent-500' : 'bg-gray-300'}`}
-                    />
-                  ))}
-                </div>
+            {/* Content with padding */}
+            <div className="px-3 pb-4">
+              {/* Title and price */}
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-lg font-bold mb-0 flex-1 pr-3" style={{ color: '#636363' }}>
+                  {selectedDetailItem.title}
+                </h3>
+                <span className="text-lg font-bold text-black">
+                  {selectedDetailItem.price} ₽
+                </span>
               </div>
-
-              {/* Title and description */}
-              <h3 className="text-lg font-bold text-primary-900 mb-2">
-                {selectedDetailItem.title}
-              </h3>
               
-              <p className="text-gray-600 text-xs mb-3 leading-relaxed">
+              <p className="text-gray-600 text-xs mb-2 leading-relaxed">
                 {selectedDetailItem.description}
               </p>
 
               {/* Ingredients */}
-              <div className="mb-3">
+              <div className="mb-2">
                 <h4 className="font-semibold text-primary-900 mb-1 text-sm">Состав:</h4>
                 <p className="text-gray-600 text-xs leading-relaxed">
                   {selectedDetailItem.ingredients}
@@ -1444,10 +2125,10 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
               </div>
 
               {/* Nutrition info */}
-              <div className="mb-4">
-                <h4 className="font-semibold text-primary-900 mb-2 text-sm">Пищевая ценность:</h4>
-                <div className="flex justify-between items-center text-xs mb-2">
-                  <span className="text-gray-600">{selectedDetailItem.weight} г</span>
+              <div className="mb-3">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="font-semibold text-sm" style={{ color: '#1F1F1F' }}>Пищевая ценность:</h4>
+                  <span className="text-sm" style={{ color: '#1F1F1F' }}>{selectedDetailItem.weight} г</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <div className="text-center">
@@ -1481,7 +2162,15 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                           addToCart(selectedDetailItem, variant)
                           closeDetailModal()
                         }}
-                        className="w-full p-3 text-left border border-gray-200 rounded-xl hover:border-accent-500 hover:bg-accent-50 transition-colors"
+                        className="w-full p-3 text-left border border-gray-200 rounded-xl transition-colors"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#FA742D';
+                  e.currentTarget.style.backgroundColor = '#FFF5F0';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#E5E7EB';
+                  e.currentTarget.style.backgroundColor = 'white';
+                }}
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-primary-900 capitalize text-sm">{variant}</span>
@@ -1493,23 +2182,17 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                 </div>
               )}
 
-              {/* Bottom section with price and buttons */}
-              <div className="border-t border-gray-200 pt-3">
-                <div className="flex items-center justify-end mb-3">
-                  <span className="text-lg font-bold text-accent-500">
-                    {selectedDetailItem.price} ₽
-                  </span>
-                </div>
-
+              {/* Bottom section with buttons */}
+              <div className="border-t border-gray-200 pt-3 mt-3">
                 {/* Show regular add to cart for items without variants */}
                 {!hasVariants(selectedDetailItem.id) && (
                   <div className="flex items-center gap-3">
                     {/* Quantity selector */}
-                    <div className="flex items-center bg-gray-100 rounded-xl overflow-hidden">
+                    <div className="flex items-center bg-gray-100 rounded-full overflow-hidden" style={{ flex: '2' }}>
                       <button 
                         onClick={() => {
-                          const currentQuantity = getCartItemQuantity(selectedDetailItem.id)
-                          if (currentQuantity > 0) {
+                          const currentQuantity = getCartItemQuantity(selectedDetailItem.id) || 1
+                          if (currentQuantity > 1) {
                             removeFromCart(selectedDetailItem.id)
                           }
                         }}
@@ -1519,8 +2202,8 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                         </svg>
                       </button>
-                      <div className="px-3 py-2 font-semibold text-primary-900 min-w-[40px] text-center text-sm">
-                        {getCartItemQuantity(selectedDetailItem.id)}
+                      <div className="px-3 py-2 font-semibold text-primary-900 min-w-[40px] text-center text-sm flex-1">
+                        {getCartItemQuantity(selectedDetailItem.id) || 1}
                       </div>
                       <button 
                         onClick={() => addToCart(selectedDetailItem)}
@@ -1538,9 +2221,16 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                         addToCart(selectedDetailItem)
                         closeDetailModal()
                       }}
-                      className="flex-1 bg-accent-500 hover:bg-accent-600 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors text-sm"
+                      className="text-white font-semibold py-2.5 px-6 rounded-full transition-colors text-sm"
+                      style={{ backgroundColor: '#1F1F1F', flex: '3' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#333333';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#1F1F1F';
+                }}
                     >
-                      Добавить в корзину
+                      Добавить
                     </button>
                   </div>
                 )}
