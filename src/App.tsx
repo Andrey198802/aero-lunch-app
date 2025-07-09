@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { LoadingPage, LandingPage, MenuPage, CartPage } from './components'
+import { LoadingPage, LandingPage, MenuPage, CartPage, CheckoutPage } from './components'
 
 interface CartItem {
   id: number
@@ -11,7 +11,7 @@ interface CartItem {
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState<'landing' | 'menu' | 'cart'>('landing')
+  const [currentPage, setCurrentPage] = useState<'landing' | 'menu' | 'cart' | 'checkout'>('landing')
   const [cart, setCart] = useState<CartItem[]>([])
 
   useEffect(() => {
@@ -22,6 +22,11 @@ function App() {
 
     return () => clearTimeout(timer)
   }, [])
+
+  const handleOrderComplete = () => {
+    setCart([])
+    setCurrentPage('menu')
+  }
 
   if (isLoading) {
     return <LoadingPage />
@@ -37,6 +42,17 @@ function App() {
         cart={cart}
         onNavigateBack={() => setCurrentPage('menu')}
         onUpdateCart={setCart}
+        onNavigateToCheckout={() => setCurrentPage('checkout')}
+      />
+    )
+  }
+
+  if (currentPage === 'checkout') {
+    return (
+      <CheckoutPage 
+        cart={cart}
+        onNavigateBack={() => setCurrentPage('cart')}
+        onOrderComplete={handleOrderComplete}
       />
     )
   }

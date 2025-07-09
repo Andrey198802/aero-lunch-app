@@ -250,7 +250,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
     
     return (
       <div className="price-button">
-        <div className="flex items-center bg-white border-2 rounded-full h-10" style={{ borderColor: '#FA742D' }}>
+                  <div className="flex items-center bg-white border-2 rounded-full h-10" style={{ borderColor: '#FA742D' }}>
           <button 
             onClick={() => removeFromCart(item.id)}
             className="text-primary-900 font-bold text-lg px-3 py-2 flex-none"
@@ -847,7 +847,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
         calories: 250
       },
       weight: 200,
-      images: ['/logo_aero3.svg', '/logo_aero3.svg'] // Пока используем заглушки
+      images: [item.image, item.image] // Используем изображение блюда
     }
 
     // Специфичная информация для некоторых блюд
@@ -1957,7 +1957,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-primary-900 capitalize">{variant}</span>
-                      <span className="text-gray-600">{selectedItem.price}₽</span>
+                      <span className="text-black">{selectedItem.price}₽</span>
                     </div>
                   </button>
                 ))}
@@ -1971,7 +1971,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
       {showDetailModal && selectedDetailItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50 modal-overlay">
           <div 
-            className="bg-white rounded-t-3xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-slide-up"
+            className="bg-white rounded-t-3xl w-full max-w-md max-h-[95vh] overflow-y-auto animate-slide-up"
             onTouchStart={(e) => {
               // Добавляем обработку свайпа для всех карточек
               const touch = e.touches[0]
@@ -2174,7 +2174,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-primary-900 capitalize text-sm">{variant}</span>
-                          <span className="text-accent-500 font-semibold">{selectedDetailItem.price} ₽</span>
+                          <span className="text-black font-semibold">{selectedDetailItem.price} ₽</span>
                         </div>
                       </button>
                     ))}
