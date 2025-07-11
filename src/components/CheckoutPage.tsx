@@ -15,10 +15,6 @@ interface CheckoutPageProps {
 }
 
 export default function CheckoutPage({ cart, onNavigateBack, onOrderComplete }: CheckoutPageProps) {
-  // Автоматическая прокрутка к верху при открытии страницы
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
 
   const [formData, setFormData] = useState({
     departureDate: '',

@@ -325,22 +325,33 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
     }, 1000)
   }
 
+  // Дебаунс для IntersectionObserver
+  const intersectionTimeoutRef = useRef<number>(0)
+  const isScrollingRef = useRef(false)
+
   // Используем IntersectionObserver для отслеживания видимых секций
   useEffect(() => {
     const options = {
       root: null,
-      rootMargin: '-20% 0px -70% 0px', // Более точная зона срабатывания
+      rootMargin: '-50% 0px -40% 0px', // Переключаем когда секция в центре экрана
       threshold: 0.1
     }
 
     const observer = new IntersectionObserver((entries) => {
-      if (isManualSelection.current) return // Не обновляем если идет ручной скролл
+      if (isManualSelection.current || isScrollingRef.current) return // Не обновляем если идет ручной скролл или активный скролл
       
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          setSelectedCategory(entry.target.id)
-        }
-      })
+      // Дебаунс для предотвращения частых обновлений
+      if (intersectionTimeoutRef.current) {
+        clearTimeout(intersectionTimeoutRef.current)
+      }
+      
+      intersectionTimeoutRef.current = setTimeout(() => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting && !isScrollingRef.current) {
+            setSelectedCategory(entry.target.id)
+          }
+        })
+      }, 150) // Небольшая задержка
     }, options)
 
     // Наблюдаем только за секциями с контентом
@@ -356,19 +367,72 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
       }
     })
 
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      if (intersectionTimeoutRef.current) {
+        clearTimeout(intersectionTimeoutRef.current)
+      }
+    }
   }, [])
 
-  // Автоматический скролл горизонтального меню к активной кнопке (только для автоматического изменения)
+  // Отслеживание скрола для предотвращения конфликтов
   useEffect(() => {
-    if (!isManualSelection.current && categoriesMenuRef.current) {
+    let scrollTimer: number
+
+    const handleScroll = () => {
+      isScrollingRef.current = true
+      clearTimeout(scrollTimer)
+      
+      scrollTimer = setTimeout(() => {
+        isScrollingRef.current = false
+      }, 100)
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      clearTimeout(scrollTimer)
+    }
+  }, [])
+
+  // Автоматический скролл горизонтального меню к активной кнопке
+  useEffect(() => {
+    if (categoriesMenuRef.current) {
       const activeButton = categoriesMenuRef.current.querySelector(`[data-category="${selectedCategory}"]`) as HTMLButtonElement
       if (activeButton) {
-        activeButton.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-          inline: 'center'
-        })
+        const container = categoriesMenuRef.current
+        const buttonRect = activeButton.getBoundingClientRect()
+        const containerRect = container.getBoundingClientRect()
+        
+        // Вычисляем позицию для центрирования кнопки
+        const buttonCenter = buttonRect.left + buttonRect.width / 2
+        const containerCenter = containerRect.left + containerRect.width / 2
+        const scrollOffset = buttonCenter - containerCenter
+        
+        // Плавный скролл без блокировки основного скролла
+        const currentScroll = container.scrollLeft
+        const targetScroll = currentScroll + scrollOffset
+        
+        // Анимация скролла через requestAnimationFrame
+        const startTime = performance.now()
+        const duration = isManualSelection.current ? 300 : 150 // Быстрее для автоматического
+        
+        const animateScroll = (currentTime: number) => {
+          const elapsed = currentTime - startTime
+          const progress = Math.min(elapsed / duration, 1)
+          
+          // Easing функция для плавности
+          const easeProgress = progress * (2 - progress)
+          
+          container.scrollLeft = currentScroll + (targetScroll - currentScroll) * easeProgress
+          
+          if (progress < 1) {
+            requestAnimationFrame(animateScroll)
+          }
+        }
+        
+        requestAnimationFrame(animateScroll)
       }
     }
   }, [selectedCategory])

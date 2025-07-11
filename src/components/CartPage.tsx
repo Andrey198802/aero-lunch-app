@@ -16,10 +16,6 @@ interface CartItem {
 }
 
 export default function CartPage({ cart, onNavigateBack, onUpdateCart, onNavigateToCheckout }: CartPageProps) {
-  // Автоматическая прокрутка к верху при открытии корзины
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
 
   const addToCart = (item: CartItem) => {
     const newCart = cart.map(cartItem =>
