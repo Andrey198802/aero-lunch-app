@@ -14,7 +14,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState<'landing' | 'menu' | 'cart' | 'checkout'>('landing')
   const [cart, setCart] = useState<CartItem[]>([])
   const [menuScrollPosition, setMenuScrollPosition] = useState(0)
-  const [savedCategory, setSavedCategory] = useState<string>('')
+  // const [savedCategory, setSavedCategory] = useState<string>('')
 
   useEffect(() => {
     // Имитация загрузки
