@@ -551,13 +551,20 @@ app.post('/api/telegram/webhook', async (req, res) => {
 
       // Обработка команд
       if (text === '/start') {
-        await sendTelegramMessage(chatId, 
-          `Добро пожаловать в Aero Lunch! 🍽\n\n` +
-          `Здесь вы можете заказать вкусную еду.\n\n` +
-          `Доступные команды:\n` +
-          `/menu - Посмотреть меню\n` +
-          `/orders - Мои заказы\n` +
-          `/help - Помощь`
+        // Сначала отправляем фото с описанием
+        await sendTelegramPhoto(chatId, 
+          'https://raw.githubusercontent.com/Andrey198802/aero-lunch-app/main/public/logo_aero2.svg',
+          `🍽 <b>Добро пожаловать в Aero Lunch!</b> ✈️\n\n` +
+          `🚀 <i>Быстрая доставка еды прямо на борт самолета!</i>\n\n` +
+          `<b>🍳 У нас вы найдете:</b>\n` +
+          `• Свежие завтраки\n` +
+          `• Сытные обеды\n` +
+          `• Полезные закуски\n` +
+          `• Ароматные напитки\n\n` +
+          `⏰ <b>Доставка от 30 минут</b>\n` +
+          `💳 Оплата картой или бонусами\n` +
+          `🎁 Накапливайте бонусы с каждым заказом!\n\n` +
+          `<b>Нажмите кнопку "МЕНЮ" ниже, чтобы сделать заказ! 👇</b>`
         );
       } else if (text === '/menu') {
         await sendTelegramMessage(chatId, 
@@ -630,6 +637,37 @@ async function sendTelegramMessage(chatId: number, text: string) {
     }
   } catch (error) {
     console.error('Ошибка отправки сообщения в Telegram:', error);
+  }
+}
+
+// Функция для отправки фото в Telegram
+async function sendTelegramPhoto(chatId: number, photoUrl: string, caption: string) {
+  try {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) {
+      console.error('Токен бота не найден');
+      return;
+    }
+
+    const url = `https://api.telegram.org/bot${botToken}/sendPhoto`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        photo: photoUrl,
+        caption: caption,
+        parse_mode: 'HTML',
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Ошибка отправки фото:', await response.text());
+    }
+  } catch (error) {
+    console.error('Ошибка отправки фото в Telegram:', error);
   }
 }
 
