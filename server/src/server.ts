@@ -141,6 +141,57 @@ app.get('/api/menu', async (req, res) => {
   }
 });
 
+// Регистрация/обновление пользователя (без строгой авторизации)
+app.post('/api/user/register', async (req, res) => {
+  try {
+    const initData = req.headers['x-telegram-init-data'];
+    
+    if (!initData) {
+      return res.status(400).json({ error: 'Отсутствуют данные пользователя' });
+    }
+
+    // Парсим данные пользователя без строгой валидации
+    const urlParams = new URLSearchParams(initData as string);
+    const userJson = urlParams.get('user');
+    
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      console.log('Регистрируем пользователя:', user);
+      
+      // Сохраняем пользователя в БД или обновляем
+      const savedUser = await prisma.user.upsert({
+        where: { telegramId: user.id.toString() },
+        update: {
+          firstName: user.first_name,
+          lastName: user.last_name,
+          username: user.username,
+          photoUrl: user.photo_url,
+          lastActive: new Date(),
+        },
+        create: {
+          telegramId: user.id.toString(),
+          firstName: user.first_name,
+          lastName: user.last_name,
+          username: user.username,
+          photoUrl: user.photo_url,
+          lastActive: new Date(),
+        },
+      });
+
+      res.json({ 
+        success: true, 
+        message: 'Пользователь зарегистрирован',
+        user: savedUser
+      });
+    } else {
+      res.status(400).json({ error: 'Неверные данные пользователя' });
+    }
+  } catch (error) {
+    console.error('Ошибка регистрации пользователя:', error);
+    res.status(500).json({ error: 'Ошибка регистрации пользователя' });
+  }
+});
+
 // Создание заказа
 app.post('/api/orders', authenticateTelegramUser, async (req, res) => {
   try {

@@ -46,6 +46,36 @@ function App() {
       tg.expand()
     }
 
+    // Регистрируем пользователя при загрузке приложения
+    const registerUser = async () => {
+      try {
+        const initData = window.Telegram?.WebApp?.initData
+        const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user
+        
+        if (initData && telegramUser) {
+          console.log('Регистрируем пользователя:', telegramUser)
+          const response = await fetch('/api/user/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-telegram-init-data': initData
+            }
+          })
+          
+          if (response.ok) {
+            const result = await response.json()
+            console.log('Пользователь зарегистрирован:', result)
+          } else {
+            console.log('Ошибка регистрации пользователя')
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка при регистрации пользователя:', error)
+      }
+    }
+
+    registerUser()
+
     // Имитация загрузки
     const timer = setTimeout(() => {
       console.log('Loading finished')
