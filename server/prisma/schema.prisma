@@ -18,12 +18,23 @@ model User {
   lastName    String?
   username    String?
   photoUrl    String?
+  // Новые поля для профиля
+  phone       String?
+  email       String?
+  birthDate   DateTime?
+  registrationDate DateTime @default(now())
+  totalBonuses Decimal  @default(0) @db.Decimal(10, 2) // текущий баланс бонусов
+  totalOrders  Int      @default(0) // количество заказов
+  totalSpent   Decimal  @default(0) @db.Decimal(10, 2) // общая сумма заказов
   lastActive  DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Связи
   orders      Order[]
+  bonuses     UserBonus[]
+  bonusHistory BonusHistory[]
+  chatMessages ChatMessage[]
 
   @@map("users")
 }
@@ -96,9 +107,17 @@ model Order {
   userId          String
   items           Json        // JSON массив с товарами
   totalAmount     Decimal     @db.Decimal(10, 2)
+  discountAmount  Decimal     @default(0) @db.Decimal(10, 2) // размер скидки
+  bonusesUsed     Decimal     @default(0) @db.Decimal(10, 2) // использовано бонусов
+  bonusesEarned   Decimal     @default(0) @db.Decimal(10, 2) // начислено бонусов
+  promoCode       String?     // использованный промокод
   status          OrderStatus @default(PENDING)
+  deliveryType    DeliveryType @default(TAKEAWAY)
   deliveryAddress String?
+  flightNumber    String?
+  customerName    String?
   phone           String?
+  email           String?
   notes           String?
   deliveryTime    DateTime?
   createdAt       DateTime    @default(now())
@@ -121,4 +140,112 @@ enum OrderStatus {
   CANCELLED   // Отменен
 
   @@map("order_status")
+}
+
+// Типы доставки
+enum DeliveryType {
+  ONBOARD   // На борт
+  TAKEAWAY  // С собой
+
+  @@map("delivery_type")
+}
+
+// Бонусы пользователей
+model UserBonus {
+  id          String      @id @default(cuid())
+  userId      String
+  amount      Decimal     @db.Decimal(10, 2)
+  type        BonusType
+  description String
+  orderId     String?     // связь с заказом, если бонус начислен/списан за заказ
+  expiresAt   DateTime?   // дата истечения бонусов
+  createdAt   DateTime    @default(now())
+
+  // Связи
+  user        User        @relation(fields: [userId], references: [telegramId])
+
+  @@map("user_bonuses")
+}
+
+// Типы бонусных операций
+enum BonusType {
+  EARNED    // Начислено
+  SPENT     // Потрачено
+  EXPIRED   // Сгорело
+
+  @@map("bonus_type")
+}
+
+// История бонусов (детальная история операций)
+model BonusHistory {
+  id          String      @id @default(cuid())
+  userId      String
+  amount      Decimal     @db.Decimal(10, 2)
+  type        BonusType
+  description String
+  orderId     String?     // связь с заказом
+  balanceBefore Decimal   @db.Decimal(10, 2) // баланс до операции
+  balanceAfter Decimal    @db.Decimal(10, 2) // баланс после операции
+  expiresAt   DateTime?   // дата истечения (для начисленных бонусов)
+  createdAt   DateTime    @default(now())
+
+  // Связи
+  user        User        @relation(fields: [userId], references: [telegramId])
+
+  @@map("bonus_history")
+}
+
+// Промокоды
+model PromoCode {
+  id          String      @id @default(cuid())
+  code        String      @unique
+  description String?
+  discountType DiscountType
+  discountValue Decimal   @db.Decimal(10, 2)
+  minOrderAmount Decimal? @db.Decimal(10, 2) // минимальная сумма заказа
+  maxUsage    Int?        // максимальное количество использований
+  usageCount  Int         @default(0)
+  isActive    Boolean     @default(true)
+  validFrom   DateTime    @default(now())
+  validUntil  DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("promo_codes")
+}
+
+// Типы скидок
+enum DiscountType {
+  PERCENTAGE  // Процент
+  FIXED       // Фиксированная сумма
+
+  @@map("discount_type")
+}
+
+// Сообщения чата
+model ChatMessage {
+  id          String      @id @default(cuid())
+  userId      String
+  orderId     String?     // связь с заказом, если сообщение относится к заказу
+  message     String
+  isFromAdmin Boolean     @default(false)
+  isRead      Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+
+  // Связи
+  user        User        @relation(fields: [userId], references: [telegramId])
+
+  @@map("chat_messages")
+}
+
+// Настройки приложения
+model AppSettings {
+  id          String      @id @default(cuid())
+  key         String      @unique
+  value       String
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("app_settings")
 } 

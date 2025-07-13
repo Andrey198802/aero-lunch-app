@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
-import { LoadingPage, LandingPage, MenuPage, CartPage, CheckoutPage } from './components'
+import { LoadingPage, LandingPage, MenuPage, CartPage, CheckoutPage, ProfilePage } from './components'
+import { useTelegram } from './hooks/useTelegram'
+import { PageType } from './types/telegram'
 
 interface CartItem {
   id: number
@@ -11,22 +13,35 @@ interface CartItem {
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState<'landing' | 'menu' | 'cart' | 'checkout'>('landing')
+  const [currentPage, setCurrentPage] = useState<PageType>('landing')
   const [cart, setCart] = useState<CartItem[]>([])
   const [menuScrollPosition, setMenuScrollPosition] = useState(0)
+  const { tg, user } = useTelegram()
   // const [savedCategory, setSavedCategory] = useState<string>('')
 
   useEffect(() => {
+    console.log('App started')
+    console.log('Telegram WebApp:', window.Telegram?.WebApp)
+    console.log('Telegram User:', user)
+    
+    // Инициализация Telegram Web App
+    if (tg) {
+      console.log('Initializing Telegram WebApp')
+      tg.ready()
+      tg.expand()
+    }
+
     // Имитация загрузки
     const timer = setTimeout(() => {
+      console.log('Loading finished')
       setIsLoading(false)
-    }, 1000)
+    }, 2000) // Увеличил до 2 секунд
 
     return () => clearTimeout(timer)
-  }, [])
+  }, [tg, user])
 
   // Функция для плавного перехода между страницами
-  const navigateWithAnimation = (page: 'landing' | 'menu' | 'cart' | 'checkout') => {
+  const navigateWithAnimation = (page: PageType) => {
     // Сохраняем позицию скролла при уходе с MenuPage в корзину или оформление
     if (currentPage === 'menu' && (page === 'cart' || page === 'checkout')) {
       const scrollPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
@@ -102,10 +117,21 @@ function App() {
       )
     }
 
+    if (currentPage === 'profile') {
+      return (
+        <ProfilePage 
+          onBack={() => navigateWithAnimation('menu')}
+        />
+      )
+    }
+
+
+
     return (
       <MenuPage 
         onNavigateToLanding={() => navigateWithAnimation('landing')}
         onNavigateToCart={() => navigateWithAnimation('cart')}
+        onNavigateToProfile={() => navigateWithAnimation('profile')}
         cart={cart}
         onUpdateCart={setCart}
       />

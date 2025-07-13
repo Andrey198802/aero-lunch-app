@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 interface MenuPageProps {
   onNavigateToLanding: () => void
   onNavigateToCart: () => void
+  onNavigateToProfile: () => void
   cart: CartItem[]
   onUpdateCart: (cart: CartItem[]) => void
 }
@@ -38,7 +39,7 @@ interface ItemDetails {
 
 interface DetailedMenuItem extends MenuItem, ItemDetails {}
 
-export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, onUpdateCart }: MenuPageProps) {
+export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavigateToProfile, cart, onUpdateCart }: MenuPageProps) {
   const [selectedCategory, setSelectedCategory] = useState('Завтраки')
   const [showVariantModal, setShowVariantModal] = useState(false)
   const [selectedItem, setSelectedItem] = useState<{ id: number; title: string; price: number } | null>(null)
@@ -63,36 +64,36 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
       }, 400) // 400ms - длительность анимации
     }
   }, [cart, showCartButton])
-
+  
   // Функции для работы с корзиной
   const addToCart = (item: { id: number; title: string; price: number }, variant?: string) => {
     const existingItem = cart.find(cartItem => cartItem.id === item.id && cartItem.variant === variant)
-    if (existingItem) {
+      if (existingItem) {
       const newCart = cart.map(cartItem =>
-        cartItem.id === item.id && cartItem.variant === variant
-          ? { ...cartItem, quantity: cartItem.quantity + 1 }
-          : cartItem
-      )
+          cartItem.id === item.id && cartItem.variant === variant
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem
+        )
       onUpdateCart(newCart)
     } else {
       const newCart = [...cart, { ...item, quantity: 1, variant }]
       onUpdateCart(newCart)
-    }
+      }
   }
   
   const removeFromCart = (itemId: number, variant?: string) => {
     const existingItem = cart.find(cartItem => cartItem.id === itemId && cartItem.variant === variant)
-    if (existingItem && existingItem.quantity > 1) {
+      if (existingItem && existingItem.quantity > 1) {
       const newCart = cart.map(cartItem =>
-        cartItem.id === itemId && cartItem.variant === variant
-          ? { ...cartItem, quantity: cartItem.quantity - 1 }
-          : cartItem
-      )
+          cartItem.id === itemId && cartItem.variant === variant
+            ? { ...cartItem, quantity: cartItem.quantity - 1 }
+            : cartItem
+        )
       onUpdateCart(newCart)
     } else {
       const newCart = cart.filter(cartItem => !(cartItem.id === itemId && cartItem.variant === variant))
       onUpdateCart(newCart)
-    }
+      }
   }
   
   const getCartItemQuantity = (itemId: number, variant?: string) => {
@@ -199,37 +200,37 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
       if (totalQuantity === 0) {
         return (
           <div className="price-button">
-                      <button 
-            onClick={() => openVariantModal(item)}
+            <button 
+              onClick={() => openVariantModal(item)}
             className="w-full bg-gray-100 hover:bg-gray-200 text-primary-900 font-semibold text-xs py-2 px-3 rounded-full transition-colors h-10 flex items-center justify-center"
-          >
-            {item.price}₽
-          </button>
+            >
+              {item.price}₽
+            </button>
           </div>
         )
       }
       
-              return (
-          <div className="price-button">
+      return (
+        <div className="price-button">
             <div className="flex items-center bg-white border-2 rounded-full h-10" style={{ borderColor: '#FA742D' }}>
-              <button 
-                onClick={() => removeVariantItemFromCart(item.id)}
+            <button 
+              onClick={() => removeVariantItemFromCart(item.id)}
                 className="text-primary-900 font-bold text-lg px-3 py-2 flex-none"
-              >
-                -
-              </button>
+            >
+              -
+            </button>
               <div className="flex-1 text-center text-primary-900 font-semibold text-xs">
-                {totalQuantity}
-              </div>
-              <button 
-                onClick={() => openVariantModal(item)}
-                className="text-primary-900 font-bold text-lg px-3 py-2 flex-none"
-              >
-                +
-              </button>
+              {totalQuantity}
             </div>
+            <button 
+              onClick={() => openVariantModal(item)}
+                className="text-primary-900 font-bold text-lg px-3 py-2 flex-none"
+            >
+              +
+            </button>
           </div>
-        )
+        </div>
+      )
     }
     
     // Обычная логика для других товаров
@@ -378,7 +379,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
   // Отслеживание скрола для предотвращения конфликтов
   useEffect(() => {
     let scrollTimer: number
-
+    
     const handleScroll = () => {
       isScrollingRef.current = true
       clearTimeout(scrollTimer)
@@ -398,9 +399,9 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
 
   // Автоматический скролл горизонтального меню к активной кнопке
   useEffect(() => {
-    if (categoriesMenuRef.current) {
-      const activeButton = categoriesMenuRef.current.querySelector(`[data-category="${selectedCategory}"]`) as HTMLButtonElement
-      if (activeButton) {
+      if (categoriesMenuRef.current) {
+        const activeButton = categoriesMenuRef.current.querySelector(`[data-category="${selectedCategory}"]`) as HTMLButtonElement
+        if (activeButton) {
         const container = categoriesMenuRef.current
         const buttonRect = activeButton.getBoundingClientRect()
         const containerRect = container.getBoundingClientRect()
@@ -1483,8 +1484,15 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             </h1>
           </div>
           
-          {/* Empty div for spacing */}
-          <div className="w-6"></div>
+          {/* Profile Button */}
+          <button 
+            onClick={onNavigateToProfile}
+            className="text-white hover:text-gray-200 transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </button>
         </div>
       </header>
 
@@ -1499,21 +1507,21 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             const isNewCategory = ['Любимые', 'Хиты продаж', 'Новинки'].includes(category)
             
             return (
-              <button
-                key={category}
-                data-category={category}
+            <button
+              key={category}
+              data-category={category}
                 onClick={() => isNewCategory ? null : scrollToSection(category)}
-                className={`flex-none px-6 py-2 font-medium rounded-full text-sm whitespace-nowrap transition-colors ${
-                  selectedCategory === category
+              className={`flex-none px-6 py-2 font-medium rounded-full text-sm whitespace-nowrap transition-colors ${
+                selectedCategory === category
                     ? 'bg-primary-900 text-white'
                     : isNewCategory 
                       ? 'border border-gray-300 text-gray-400 cursor-not-allowed'
                       : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
                 }`}
                 disabled={isNewCategory}
-              >
-                {category}
-              </button>
+            >
+              {category}
+            </button>
             )
           })}
         </div>
@@ -1562,9 +1570,9 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                 <div className="p-3 flex flex-col" style={{ height: '150px' }}>
                   <div style={{ height: '70px' }}>
                     <h3 className="font-bold text-primary-900 mb-1 leading-tight" style={{ fontSize: '12px' }}>
-                      {item.title}
-                    </h3>
-                    
+                    {item.title}
+                  </h3>
+                  
                     {item.description && (
                       <p className="text-gray-600 leading-tight" style={{ fontSize: '12px' }}>
                         {item.description}
@@ -1623,9 +1631,9 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                 <div className="p-3 flex flex-col" style={{ height: '150px' }}>
                   <div style={{ height: '70px' }}>
                     <h3 className="font-bold text-primary-900 mb-1 leading-tight" style={{ fontSize: '12px' }}>
-                      {item.title}
-                    </h3>
-                    
+                    {item.title}
+                  </h3>
+                  
                     {item.description && (
                       <p className="text-gray-600 leading-tight" style={{ fontSize: '12px' }}>
                         {item.description}
@@ -1684,9 +1692,9 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                 <div className="p-3 flex flex-col" style={{ height: '150px' }}>
                   <div style={{ height: '70px' }}>
                     <h3 className="font-bold text-primary-900 mb-1 leading-tight" style={{ fontSize: '12px' }}>
-                      {item.title}
-                    </h3>
-                    
+                    {item.title}
+                  </h3>
+                  
                     {item.description && (
                       <p className="text-gray-600 leading-tight" style={{ fontSize: '12px' }}>
                         {item.description}
@@ -1745,9 +1753,9 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                 <div className="p-3 flex flex-col" style={{ height: '150px' }}>
                   <div style={{ height: '70px' }}>
                     <h3 className="font-bold text-primary-900 mb-1 leading-tight" style={{ fontSize: '12px' }}>
-                      {item.title}
-                    </h3>
-                    
+                    {item.title}
+                  </h3>
+                  
                     {item.description && (
                       <p className="text-gray-600 leading-tight" style={{ fontSize: '12px' }}>
                         {item.description}
@@ -1806,9 +1814,9 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                 <div className="p-3 flex flex-col" style={{ height: '150px' }}>
                   <div style={{ height: '70px' }}>
                     <h3 className="font-bold text-primary-900 mb-1 leading-tight" style={{ fontSize: '12px' }}>
-                      {item.title}
-                    </h3>
-                    
+                    {item.title}
+                  </h3>
+                  
                     {item.description && (
                       <p className="text-gray-600 leading-tight" style={{ fontSize: '12px' }}>
                         {item.description}
@@ -1867,9 +1875,9 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                 <div className="p-3 flex flex-col" style={{ height: '150px' }}>
                   <div style={{ height: '70px' }}>
                     <h3 className="font-bold text-primary-900 mb-1 leading-tight" style={{ fontSize: '12px' }}>
-                      {item.title}
-                    </h3>
-                    
+                    {item.title}
+                  </h3>
+                  
                     {item.description && (
                       <p className="text-gray-600 leading-tight" style={{ fontSize: '12px' }}>
                         {item.description}
@@ -1928,9 +1936,9 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                 <div className="p-3 flex flex-col" style={{ height: '150px' }}>
                   <div style={{ height: '70px' }}>
                     <h3 className="font-bold text-primary-900 mb-1 leading-tight" style={{ fontSize: '12px' }}>
-                      {item.title}
-                    </h3>
-                    
+                    {item.title}
+                  </h3>
+                  
                     {item.description && (
                       <p className="text-gray-600 leading-tight" style={{ fontSize: '12px' }}>
                         {item.description}
@@ -1949,6 +1957,8 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
         </div>
       </main>
 
+
+
       {/* Cart Button */}
       {showCartButton && (
         <div 
@@ -1958,7 +1968,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
           style={{ borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}
         >
           <div className="content-safe">
-            <button 
+          <button 
               className="w-full text-white font-semibold transition-colors flex items-center justify-between px-6 rounded-full"
               style={{ 
                 backgroundColor: '#1F1F1F',
@@ -1966,10 +1976,10 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                 fontSize: '14px'
               }}
               onClick={onNavigateToCart}
-            >
+          >
             <span>Перейти в корзину</span>
             <div className="flex items-center gap-2">
-              <span>{getTotalPrice()}₽</span>
+            <span>{getTotalPrice()}₽</span>
               <div 
                 className="flex items-center justify-center text-white font-semibold rounded-full min-w-[24px] h-6 px-2"
                 style={{ 
@@ -2105,36 +2115,36 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
             }}
           >
             {/* Image Swiper - Full width at top */}
-            <div className="relative mb-3">
-              <div 
+              <div className="relative mb-3">
+                <div 
                 className="h-64 bg-gray-100 flex items-center justify-center overflow-hidden touch-pan-x relative"
-                onTouchStart={(e) => {
-                  const touch = e.touches[0]
-                  const startX = touch.clientX
-                  
-                  const handleTouchMove = (e: TouchEvent) => {
+                  onTouchStart={(e) => {
                     const touch = e.touches[0]
-                    const deltaX = touch.clientX - startX
+                    const startX = touch.clientX
                     
-                    if (Math.abs(deltaX) > 50) {
-                      if (deltaX > 0 && currentImageIndex > 0) {
-                        setCurrentImageIndex(currentImageIndex - 1)
-                      } else if (deltaX < 0 && currentImageIndex < selectedDetailItem.images.length - 1) {
-                        setCurrentImageIndex(currentImageIndex + 1)
+                    const handleTouchMove = (e: TouchEvent) => {
+                      const touch = e.touches[0]
+                      const deltaX = touch.clientX - startX
+                      
+                      if (Math.abs(deltaX) > 50) {
+                        if (deltaX > 0 && currentImageIndex > 0) {
+                          setCurrentImageIndex(currentImageIndex - 1)
+                        } else if (deltaX < 0 && currentImageIndex < selectedDetailItem.images.length - 1) {
+                          setCurrentImageIndex(currentImageIndex + 1)
+                        }
+                        document.removeEventListener('touchmove', handleTouchMove)
                       }
-                      document.removeEventListener('touchmove', handleTouchMove)
                     }
-                  }
-                  
-                  document.addEventListener('touchmove', handleTouchMove)
-                  document.addEventListener('touchend', () => {
-                    document.removeEventListener('touchmove', handleTouchMove)
-                  }, { once: true })
-                }}
-              >
-                <img
-                  src={selectedDetailItem.images[currentImageIndex]}
-                  alt={selectedDetailItem.title}
+                    
+                    document.addEventListener('touchmove', handleTouchMove)
+                    document.addEventListener('touchend', () => {
+                      document.removeEventListener('touchmove', handleTouchMove)
+                    }, { once: true })
+                  }}
+                >
+                  <img
+                    src={selectedDetailItem.images[currentImageIndex]}
+                    alt={selectedDetailItem.title}
                   className="w-48 h-48 object-contain opacity-60"
                 />
                 
@@ -2150,29 +2160,29 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, cart, 
                 
                 {/* Drag indicator */}
                 <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-white bg-opacity-60 rounded-full"></div>
-              </div>
+                </div>
               
-              {/* Dots indicator */}
-              <div className="flex justify-center mt-2 space-x-1">
-                {selectedDetailItem.images.map((_: string, index: number) => (
-                  <div
-                    key={index}
+                {/* Dots indicator */}
+                <div className="flex justify-center mt-2 space-x-1">
+                  {selectedDetailItem.images.map((_: string, index: number) => (
+                    <div
+                      key={index}
                     className="w-1.5 h-1.5 rounded-full"
                     style={{ 
                       backgroundColor: index === currentImageIndex ? '#FA742D' : '#D1D5DB' 
                     }}
-                  />
-                ))}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
 
             {/* Content with padding */}
             <div className="px-3 pb-4">
               {/* Title and price */}
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-lg font-bold mb-0 flex-1 pr-3" style={{ color: '#636363' }}>
-                  {selectedDetailItem.title}
-                </h3>
+                {selectedDetailItem.title}
+              </h3>
                 <span className="text-lg font-bold text-black">
                   {selectedDetailItem.price} ₽
                 </span>

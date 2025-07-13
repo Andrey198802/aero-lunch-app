@@ -147,4 +147,53 @@
     padding-left: max(16px, env(safe-area-inset-left));
     padding-right: max(16px, env(safe-area-inset-right));
   }
+  
+  /* Анимации для загрузки */
+  .animate-pulse-slow {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Стили для профиля */
+  .profile-card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200;
+  }
+  
+  .profile-input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+  
+  .profile-button {
+    @apply px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+  }
+  
+  .profile-button-secondary {
+    @apply px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors;
+  }
+  
+  /* Стили для бонусов */
+  .bonus-card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200;
+  }
+  
+  .bonus-balance {
+    @apply bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg p-6 text-center;
+  }
+  
+  /* Стили для истории заказов */
+  .order-card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200;
+  }
+  
+  .order-expandable {
+    @apply cursor-pointer hover:bg-gray-50 transition-colors;
+  }
+  
+  /* Адаптивные сетки */
+  .grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+  
+  .grid-stats {
+    @apply grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4;
+  }
 } 

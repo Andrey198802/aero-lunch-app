@@ -1,4 +1,4 @@
-
+ 
 
 interface CartPageProps {
   cart: CartItem[]
