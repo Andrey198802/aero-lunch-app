@@ -38,7 +38,8 @@ app.use(cors({
     'https://*.ngrok-free.app',
     'http://localhost:3000',
     'http://localhost:3001',
-    // Добавьте здесь домен вашего продакшен сайта
+    'https://aero-lunch.ru',
+    'https://www.aero-lunch.ru'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -695,7 +696,7 @@ async function setMenuButtonForUser(chatId: number) {
           type: 'web_app',
           text: 'МЕНЮ',
           web_app: {
-            url: 'http://158.160.177.251:3000'
+            url: 'https://aero-lunch.ru'
           }
         }
       }),
@@ -731,7 +732,7 @@ async function setMenuButton() {
           type: 'web_app',
           text: 'МЕНЮ',
           web_app: {
-            url: 'http://158.160.177.251:3000' // Изменено на HTTP
+            url: 'https://aero-lunch.ru'
           }
         }
       }),
@@ -756,6 +757,163 @@ function calculateTotalAmount(items: any[]): number {
   }, 0);
 }
 
+// Middleware для проверки прав администратора
+const authenticateAdmin = (req: any, res: any, next: any) => {
+  const adminPassword = req.headers['x-admin-password'];
+  
+  // Временная проверка пароля (в продакшене использовать более безопасный способ)
+  if (adminPassword === 'admin123') {
+    next();
+  } else {
+    res.status(401).json({ error: 'Недостаточно прав доступа' });
+  }
+};
+
+// Админские endpoint'ы
+app.post('/api/admin/auth', (req: any, res: any) => {
+  const { password } = req.body;
+  
+  if (password === 'admin123') {
+    res.json({ 
+      success: true, 
+      token: 'admin-token-placeholder' // В продакшене использовать JWT
+    });
+  } else {
+    res.status(401).json({ error: 'Неверный пароль' });
+  }
+});
+
+// Получение статистики для админки
+app.get('/api/admin/stats', authenticateAdmin, async (req: any, res: any) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // Заказы за сегодня
+    const todayOrders = await prisma.order.count({
+      where: {
+        createdAt: {
+          gte: today,
+          lt: tomorrow
+        }
+      }
+    });
+    
+    // Общее количество пользователей
+    const totalUsers = await prisma.user.count();
+    
+    // Выручка за сегодня
+    const todayRevenue = await prisma.order.aggregate({
+      where: {
+        createdAt: {
+          gte: today,
+          lt: tomorrow
+        },
+        status: {
+          not: 'CANCELLED'
+        }
+      },
+      _sum: {
+        totalAmount: true
+      }
+    });
+    
+    res.json({
+      todayOrders,
+      totalUsers,
+      todayRevenue: todayRevenue._sum.totalAmount || 0
+    });
+  } catch (error) {
+    console.error('Ошибка получения статистики:', error);
+    res.status(500).json({ error: 'Ошибка получения статистики' });
+  }
+});
+
+// Получение списка заказов для админки
+app.get('/api/admin/orders', authenticateAdmin, async (req: any, res: any) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const status = req.query.status;
+    
+    const where: any = {};
+    if (status) {
+      where.status = status;
+    }
+    
+    const orders = await prisma.order.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            telegramId: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      skip: (page - 1) * limit,
+      take: limit
+    });
+    
+    const total = await prisma.order.count({ where });
+    
+    res.json({
+      orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Ошибка получения заказов:', error);
+    res.status(500).json({ error: 'Ошибка получения заказов' });
+  }
+});
+
+// Обновление статуса заказа
+app.put('/api/admin/orders/:id/status', authenticateAdmin, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    const order = await prisma.order.update({
+      where: { id: id },
+      data: { status },
+      include: {
+        user: true
+      }
+    });
+    
+    // Отправляем уведомление пользователю
+    const statusMessages = {
+      'CONFIRMED': 'Ваш заказ подтвержден и готовится',
+      'PREPARING': 'Ваш заказ готовится',
+      'READY': 'Ваш заказ готов к выдаче',
+      'DELIVERED': 'Ваш заказ доставлен',
+      'CANCELLED': 'Ваш заказ отменен'
+    };
+    
+    const message = statusMessages[status as keyof typeof statusMessages];
+    if (message && order.user) {
+      await sendTelegramMessage(parseInt(order.user.telegramId), message);
+    }
+    
+    res.json({ success: true, order });
+  } catch (error) {
+    console.error('Ошибка обновления статуса заказа:', error);
+    res.status(500).json({ error: 'Ошибка обновления статуса заказа' });
+  }
+});
+
 // Обработчик ошибок
 app.use((err: any, req: any, res: any, next: any) => {
   console.error(err.stack);
@@ -763,7 +921,7 @@ app.use((err: any, req: any, res: any, next: any) => {
 });
 
 // Запуск сервера
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3002;
 
 app.listen(PORT, () => {
   console.log(`🚀 Сервер запущен на порту ${PORT}`);

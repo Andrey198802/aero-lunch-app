@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { LoadingPage, LandingPage, MenuPage, CartPage, CheckoutPage, ProfilePage } from './components'
+import { LoadingPage, LandingPage, MenuPage, CartPage, CheckoutPage, ProfilePage, AdminPage } from './components'
 import { useTelegram } from './hooks/useTelegram'
 import { PageType } from './types/telegram'
 
@@ -24,6 +24,21 @@ function App() {
     console.log('Telegram WebApp:', window.Telegram?.WebApp)
     console.log('Telegram User:', user)
     
+    // Проверяем URL для определения начальной страницы
+    const path = window.location.pathname
+    console.log('Current path:', path)
+    console.log('Current page before:', currentPage)
+    
+    if (path === '/admin') {
+      console.log('Setting page to admin')
+      setCurrentPage('admin')
+    } else if (path === '/profile') {
+      console.log('Setting page to profile')
+      setCurrentPage('profile')
+    } else {
+      console.log('Path not matched, staying on:', currentPage)
+    }
+    
     // Инициализация Telegram Web App
     if (tg) {
       console.log('Initializing Telegram WebApp')
@@ -34,6 +49,7 @@ function App() {
     // Имитация загрузки
     const timer = setTimeout(() => {
       console.log('Loading finished')
+      console.log('Current page after loading:', currentPage)
       setIsLoading(false)
     }, 2000) // Увеличил до 2 секунд
 
@@ -92,6 +108,8 @@ function App() {
 
   // Контейнер с анимацией
   const pageContent = () => {
+    console.log('Rendering page:', currentPage)
+    
     if (currentPage === 'landing') {
       return <LandingPage onNavigateToMenu={() => navigateWithAnimation('menu')} />
     }
@@ -125,13 +143,20 @@ function App() {
       )
     }
 
-
+    if (currentPage === 'admin') {
+      return (
+        <AdminPage 
+          onBack={() => navigateWithAnimation('menu')}
+        />
+      )
+    }
 
     return (
       <MenuPage 
         onNavigateToLanding={() => navigateWithAnimation('landing')}
         onNavigateToCart={() => navigateWithAnimation('cart')}
         onNavigateToProfile={() => navigateWithAnimation('profile')}
+        onNavigateToAdmin={() => navigateWithAnimation('admin')}
         cart={cart}
         onUpdateCart={setCart}
       />

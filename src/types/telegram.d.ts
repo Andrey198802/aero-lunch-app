@@ -168,4 +168,4 @@ export type UpdateProfileData = {
   birthDate?: string
 }
 
-export type PageType = 'landing' | 'menu' | 'cart' | 'checkout' | 'profile' 
+export type PageType = 'landing' | 'menu' | 'cart' | 'checkout' | 'profile' | 'admin' 

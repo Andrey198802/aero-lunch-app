@@ -175,9 +175,38 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="px-4 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">Личный кабинет</h1>
+      <div className="bg-white shadow-sm" style={{ backgroundColor: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', width: '100%' }}>
+        <div className="px-4 py-4 flex items-center" style={{ padding: '16px', display: 'flex', alignItems: 'center', width: '100%' }}>
+          <button
+            onClick={onBack}
+            className="mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            style={{ 
+              marginRight: '16px', 
+              padding: '12px', 
+              borderRadius: '8px',
+              backgroundColor: '#f3f4f6',
+              border: '1px solid #e5e7eb',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '40px',
+              minHeight: '40px'
+            }}
+          >
+            <svg 
+              className="w-6 h-6 text-gray-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+              style={{ width: '20px', height: '20px', color: '#374151' }}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900" style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: 0 }}>
+            Личный кабинет
+          </h1>
         </div>
       </div>
 

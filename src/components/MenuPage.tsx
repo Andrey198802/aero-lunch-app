@@ -4,6 +4,7 @@ interface MenuPageProps {
   onNavigateToLanding: () => void
   onNavigateToCart: () => void
   onNavigateToProfile: () => void
+  onNavigateToAdmin?: () => void
   cart: CartItem[]
   onUpdateCart: (cart: CartItem[]) => void
 }
@@ -39,7 +40,7 @@ interface ItemDetails {
 
 interface DetailedMenuItem extends MenuItem, ItemDetails {}
 
-export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavigateToProfile, cart, onUpdateCart }: MenuPageProps) {
+export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavigateToProfile, onNavigateToAdmin, cart, onUpdateCart }: MenuPageProps) {
   const [selectedCategory, setSelectedCategory] = useState('Завтраки')
   const [showVariantModal, setShowVariantModal] = useState(false)
   const [selectedItem, setSelectedItem] = useState<{ id: number; title: string; price: number } | null>(null)
@@ -1484,15 +1485,65 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
             </h1>
           </div>
           
-          {/* Profile Button */}
-          <button 
-            onClick={onNavigateToProfile}
-            className="text-white hover:text-gray-200 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </button>
+          {/* Profile and Admin Buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* Admin Button */}
+            <button 
+              onClick={onNavigateToAdmin || (() => window.location.href = '/admin')}
+              title="Админ панель"
+              style={{
+                color: 'white',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '40px',
+                minHeight: '40px'
+              }}
+            >
+              <svg 
+                style={{ width: '24px', height: '24px', color: 'white' }}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+            
+            {/* Profile Button */}
+            <button 
+              onClick={onNavigateToProfile}
+              title="Профиль"
+              style={{
+                color: 'white',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '40px',
+                minHeight: '40px'
+              }}
+            >
+              <svg 
+                style={{ width: '24px', height: '24px', color: 'white' }}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
 
