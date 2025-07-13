@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { UsersManagement } from './UsersManagement'
 
 interface AdminPageProps {
   onBack: () => void
@@ -9,6 +10,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [currentView, setCurrentView] = useState<'dashboard' | 'users'>('dashboard')
 
   // Временный пароль для демонстрации (в продакшене должен быть в env)
   const ADMIN_PASSWORD = 'admin123'
@@ -103,6 +105,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
     )
   }
 
+  // Показать управление пользователями
+  if (currentView === 'users') {
+    return <UsersManagement onBack={() => setCurrentView('dashboard')} />
+  }
+
   // Основная админ панель
   return (
     <div className="min-h-screen bg-gray-100">
@@ -189,6 +196,27 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
               </button>
               <button className="w-full text-left px-4 py-2 bg-orange-50 text-orange-700 rounded-md hover:bg-orange-100 transition-colors">
                 📂 Категории
+              </button>
+            </div>
+          </div>
+
+          {/* Управление пользователями */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Управление пользователями
+            </h3>
+            <div className="space-y-3">
+              <button 
+                onClick={() => setCurrentView('users')}
+                className="w-full text-left px-4 py-2 bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors"
+              >
+                👥 Все пользователи
+              </button>
+              <button className="w-full text-left px-4 py-2 bg-pink-50 text-pink-700 rounded-md hover:bg-pink-100 transition-colors">
+                🎁 Управление бонусами
+              </button>
+              <button className="w-full text-left px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-colors">
+                🚫 Заблокированные
               </button>
             </div>
           </div>

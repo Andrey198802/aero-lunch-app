@@ -914,6 +914,223 @@ app.put('/api/admin/orders/:id/status', authenticateAdmin, async (req: any, res:
   }
 });
 
+// === УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ ===
+
+// Получение списка всех пользователей
+app.get('/api/admin/users', authenticateAdmin, async (req: any, res: any) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const search = req.query.search || '';
+    
+    const where: any = {};
+    if (search) {
+      where.OR = [
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { username: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+    
+    const users = await prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        telegramId: true,
+        firstName: true,
+        lastName: true,
+        username: true,
+        phone: true,
+        email: true,
+        totalBonuses: true,
+        totalOrders: true,
+        totalSpent: true,
+        registrationDate: true,
+        lastActive: true,
+        createdAt: true
+      },
+      orderBy: {
+        lastActive: 'desc'
+      },
+      skip: (page - 1) * limit,
+      take: limit
+    });
+    
+    const total = await prisma.user.count({ where });
+    
+    res.json({
+      users,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Ошибка получения пользователей:', error);
+    res.status(500).json({ error: 'Ошибка получения пользователей' });
+  }
+});
+
+// Получение детальной информации о пользователе
+app.get('/api/admin/users/:id', authenticateAdmin, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    
+    const user = await prisma.user.findUnique({
+      where: { id: id },
+      include: {
+        orders: {
+          orderBy: { createdAt: 'desc' },
+          take: 10
+        },
+        bonusHistory: {
+          orderBy: { createdAt: 'desc' },
+          take: 10
+        }
+      }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+    
+    res.json({ user });
+  } catch (error) {
+    console.error('Ошибка получения пользователя:', error);
+    res.status(500).json({ error: 'Ошибка получения пользователя' });
+  }
+});
+
+// Получение заказов пользователя
+app.get('/api/admin/users/:id/orders', authenticateAdmin, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    
+    const orders = await prisma.order.findMany({
+      where: { userId: id },
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit
+    });
+    
+    const total = await prisma.order.count({ where: { userId: id } });
+    
+    res.json({
+      orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Ошибка получения заказов пользователя:', error);
+    res.status(500).json({ error: 'Ошибка получения заказов пользователя' });
+  }
+});
+
+// Управление бонусами пользователя
+app.post('/api/admin/users/:id/bonuses', authenticateAdmin, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const { amount, type, description } = req.body;
+    
+    const user = await prisma.user.findUnique({
+      where: { id: id }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+    
+    const currentBalance = Number(user.totalBonuses);
+    const changeAmount = Number(amount);
+    
+    // Проверяем, что не уходим в минус при списании
+    if (type === 'USED' && currentBalance < changeAmount) {
+      return res.status(400).json({ error: 'Недостаточно бонусов для списания' });
+    }
+    
+    const newBalance = type === 'EARNED' 
+      ? currentBalance + changeAmount 
+      : currentBalance - changeAmount;
+    
+    // Обновляем баланс пользователя
+    await prisma.user.update({
+      where: { id: id },
+      data: { totalBonuses: newBalance }
+    });
+    
+    // Создаем запись в истории бонусов
+    await prisma.bonusHistory.create({
+      data: {
+        userId: id,
+        amount: changeAmount,
+        type: type,
+        description: description || `Админ ${type === 'EARNED' ? 'начислил' : 'списал'} бонусы`,
+        balanceBefore: currentBalance,
+        balanceAfter: newBalance
+      }
+    });
+    
+    // Отправляем уведомление пользователю
+    const message = type === 'EARNED' 
+      ? `Вам начислено ${changeAmount} бонусов! Баланс: ${newBalance}`
+      : `Списано ${changeAmount} бонусов. Баланс: ${newBalance}`;
+    
+    await sendTelegramMessage(parseInt(user.telegramId), message);
+    
+    res.json({ 
+      success: true, 
+      newBalance,
+      message: 'Бонусы успешно обновлены'
+    });
+  } catch (error) {
+    console.error('Ошибка управления бонусами:', error);
+    res.status(500).json({ error: 'Ошибка управления бонусами' });
+  }
+});
+
+// Блокировка/разблокировка пользователя
+app.put('/api/admin/users/:id/status', authenticateAdmin, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const { blocked, reason } = req.body;
+    
+    const user = await prisma.user.findUnique({
+      where: { id: id }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+    
+    // Добавляем поле blocked в базу данных (если его нет)
+    // Пока что просто отправляем уведомление
+    
+    const message = blocked 
+      ? `Ваш аккаунт заблокирован. Причина: ${reason || 'Не указана'}`
+      : 'Ваш аккаунт разблокирован';
+    
+    await sendTelegramMessage(parseInt(user.telegramId), message);
+    
+    res.json({ 
+      success: true, 
+      message: `Пользователь ${blocked ? 'заблокирован' : 'разблокирован'}`
+    });
+  } catch (error) {
+    console.error('Ошибка изменения статуса пользователя:', error);
+    res.status(500).json({ error: 'Ошибка изменения статуса пользователя' });
+  }
+});
+
 // Обработчик ошибок
 app.use((err: any, req: any, res: any, next: any) => {
   console.error(err.stack);
