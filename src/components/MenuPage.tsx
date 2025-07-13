@@ -974,7 +974,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
           nutrition: { proteins: 10, fats: 8, carbs: 28, calories: 210 },
           weight: 250
         }
-      case 4: // Мюсли с йогуртом
+      case 5: // Мюсли с йогуртом
         return {
           ...baseDetails,
           description: 'Хрустящие мюсли с натуральным йогуртом, орехами и свежими фруктами.',
@@ -982,7 +982,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
           nutrition: { proteins: 12, fats: 10, carbs: 30, calories: 240 },
           weight: 200
         }
-      case 5: // Сырники
+      case 6: // Сырники
         return {
           ...baseDetails,
           description: 'Классические сырники со свежими ягодами и вашим любимым соусом.',
@@ -990,7 +990,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
           nutrition: { proteins: 20, fats: 12, carbs: 25, calories: 280 },
           weight: 180
         }
-      case 6: // Яйцо пашот с микс-салатом
+      case 7: // Яйцо пашот с микс-салатом
         return {
           ...baseDetails,
           description: 'Нежное яйцо пашот с жидким желтком, подается со свежим микс-салатом.',
@@ -998,7 +998,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
           nutrition: { proteins: 12, fats: 8, carbs: 5, calories: 130 },
           weight: 150
         }
-      case 7: // Яичница глазунья с микс-салатом
+      case 8: // Яичница глазунья с микс-салатом
         return {
           ...baseDetails,
           description: 'Классическая яичница глазунья с хрустящими краями и свежим микс-салатом.',
@@ -1006,7 +1006,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
           nutrition: { proteins: 14, fats: 12, carbs: 4, calories: 170 },
           weight: 160
         }
-      case 8: // Омлет классический с микс-салатом
+      case 9: // Омлет классический с микс-салатом
         return {
           ...baseDetails,
           description: 'Воздушный омлет, приготовленный на сливочном масле, с нежным микс-салатом.',
@@ -1014,7 +1014,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
           nutrition: { proteins: 16, fats: 14, carbs: 3, calories: 190 },
           weight: 180
         }
-      case 9: // Скрэмбл с микс-салатом
+      case 10: // Скрэмбл с микс-салатом
         return {
           ...baseDetails,
           description: 'Нежный скрэмбл из взбитых яиц, медленно приготовленный до кремовой текстуры.',
@@ -1022,7 +1022,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
           nutrition: { proteins: 15, fats: 16, carbs: 2, calories: 200 },
           weight: 170
         }
-      case 10: // Картофельные драники с лососем
+      case 11: // Картофельные драники с лососем
         return {
           ...baseDetails,
           description: 'Хрустящие картофельные драники с нежным слабосоленым лососем и сметаной.',
