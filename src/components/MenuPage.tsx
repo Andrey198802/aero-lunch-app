@@ -65,6 +65,21 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
       }, 400) // 400ms - длительность анимации
     }
   }, [cart, showCartButton])
+
+  // Расчет высоты header для правильного позиционирования меню категорий
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        const height = headerRef.current.offsetHeight
+        setHeaderHeight(height)
+      }
+    }
+
+    updateHeaderHeight()
+    window.addEventListener('resize', updateHeaderHeight)
+    
+    return () => window.removeEventListener('resize', updateHeaderHeight)
+  }, [])
   
   // Функции для работы с корзиной
   const addToCart = (item: { id: number; title: string; price: number }, variant?: string) => {
@@ -277,8 +292,12 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
   
   // Ref для горизонтального меню категорий
   const categoriesMenuRef = useRef<HTMLDivElement>(null)
+  // Ref для header
+  const headerRef = useRef<HTMLElement>(null)
   // Флаг для отслеживания ручного выбора категории
   const isManualSelection = useRef(false)
+  // Состояние для высоты header
+  const [headerHeight, setHeaderHeight] = useState(60)
   
   const categories = [
     'Любимые',
@@ -1459,7 +1478,13 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
   return (
     <div className="min-h-screen bg-white">
       {/* App Bar - Sticky Header */}
-      <header className="sticky top-0 z-50 fixed-header py-3" style={{ background: 'linear-gradient(to top, #0B73FE, #5BA1FF)' }}>
+      <header 
+        ref={headerRef}
+        className="sticky top-0 z-50 fixed-header py-3" 
+        style={{ 
+          background: 'linear-gradient(to top, #0B73FE, #5BA1FF)'
+        }}
+      >
         <div className="max-w-md mx-auto flex items-center justify-between">
           {/* Back Arrow */}
           <button 
@@ -1548,7 +1573,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
       </header>
 
       {/* Horizontal Categories Menu - Sticky */}
-      <div className="sticky top-[54px] z-40 py-2 bg-white">
+      <div className="sticky z-40 py-2 bg-white" style={{ top: `${headerHeight}px` }}>
         <div 
           ref={categoriesMenuRef}
           className="flex overflow-x-auto space-x-3 scrollbar-hide pl-4 pr-0"
