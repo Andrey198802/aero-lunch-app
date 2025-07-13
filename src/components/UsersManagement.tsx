@@ -55,7 +55,13 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({ onBack }) => {
       }
       
       const data = await response.json()
-      setUsers(data.users)
+      const safeUsers = (data.users || []).map((user: any) => ({
+        ...user,
+        totalBonuses: Number(user.totalBonuses) || 0,
+        totalOrders: Number(user.totalOrders) || 0,
+        totalSpent: Number(user.totalSpent) || 0
+      }))
+      setUsers(safeUsers)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка загрузки')
     } finally {
@@ -77,7 +83,17 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({ onBack }) => {
       }
       
       const data = await response.json()
-      setSelectedUser(data.user)
+      const safeUser = {
+        ...data.user,
+        totalBonuses: Number(data.user.totalBonuses) || 0,
+        totalOrders: Number(data.user.totalOrders) || 0,
+        totalSpent: Number(data.user.totalSpent) || 0,
+        orders: (data.user.orders || []).map((order: any) => ({
+          ...order,
+          totalAmount: Number(order.totalAmount) || 0
+        }))
+      }
+      setSelectedUser(safeUser)
       setShowUserDetails(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка загрузки')
@@ -172,8 +188,9 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({ onBack }) => {
     })
   }
 
-  const formatCurrency = (amount: number) => {
-    return `₽${amount.toFixed(2)}`
+  const formatCurrency = (amount: number | string | null | undefined) => {
+    const numAmount = typeof amount === 'number' ? amount : parseFloat(String(amount || 0))
+    return `₽${(isNaN(numAmount) ? 0 : numAmount).toFixed(2)}`
   }
 
   if (loading) {
