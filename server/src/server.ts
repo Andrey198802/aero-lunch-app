@@ -640,6 +640,42 @@ function calculateTotalAmount(items: any[]): number {
   }, 0);
 }
 
+// Функция для установки кнопки меню бота
+async function setMenuButton() {
+  try {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) {
+      console.error('Токен бота не найден');
+      return;
+    }
+
+    const url = `https://api.telegram.org/bot${botToken}/setChatMenuButton`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        menu_button: {
+          type: 'web_app',
+          text: 'МЕНЮ',
+          web_app: {
+            url: 'https://158.160.177.251:3000' // URL вашего веб-приложения
+          }
+        }
+      }),
+    });
+
+    if (response.ok) {
+      console.log('Кнопка меню успешно установлена');
+    } else {
+      console.error('Ошибка установки кнопки меню:', await response.text());
+    }
+  } catch (error) {
+    console.error('Ошибка установки кнопки меню:', error);
+  }
+}
+
 // Обработчик ошибок
 app.use((err: any, req: any, res: any, next: any) => {
   console.error(err.stack);
@@ -651,6 +687,9 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`🚀 Сервер запущен на порту ${PORT}`);
+  
+  // Устанавливаем кнопку меню при запуске сервера
+  setMenuButton();
 });
 
 // Graceful shutdown
