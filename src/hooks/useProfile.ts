@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { UserProfile, UpdateProfileData, ApiResponse } from '../types/telegram'
+import { UserProfile, UpdateProfileData } from '../types/telegram'
 
 export const useProfile = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -13,28 +13,35 @@ export const useProfile = () => {
       
       // Получаем данные авторизации
       const initData = window.Telegram?.WebApp?.initData || ''
+      const user = window.Telegram?.WebApp?.initDataUnsafe?.user
       
-      // Если нет данных Telegram, создаем тестовые данные
-      if (!initData || !window.Telegram?.WebApp?.initDataUnsafe?.user) {
-        console.log('Нет данных Telegram, используем тестовые данные')
-        setProfile({
-          id: 1,
-          telegramId: 123456789,
-          firstName: 'Тестовый',
-          lastName: 'Пользователь',
-          username: 'testuser',
-          phone: '+7 (999) 123-45-67',
-          email: 'test@example.com',
-          birthDate: '1990-01-01',
-          registrationDate: new Date().toISOString(),
-          totalBonuses: 150,
-          totalOrders: 5,
-          totalSpent: 2500
-        })
-        setLoading(false)
-        return
-      }
+      console.log('=== ОТЛАДКА ПРОФИЛЯ ===')
+      console.log('initData:', initData)
+      console.log('user:', user)
+      console.log('window.Telegram:', window.Telegram)
+      console.log('WebApp:', window.Telegram?.WebApp)
       
+      // Временно всегда используем тестовые данные для отладки
+      console.log('Используем тестовые данные для отладки')
+      setProfile({
+        id: 1,
+        telegramId: user?.id || 123456789,
+        firstName: user?.first_name || 'Тестовый',
+        lastName: user?.last_name || 'Пользователь',
+        username: user?.username || 'testuser',
+        phone: '+7 (999) 123-45-67',
+        email: 'test@example.com',
+        birthDate: '1990-01-01',
+        registrationDate: new Date().toISOString(),
+        totalBonuses: 150,
+        totalOrders: 5,
+        totalSpent: 2500
+      })
+      setLoading(false)
+      return
+      
+      // Закомментируем реальный API запрос для отладки
+      /*
       const response = await fetch('/api/user/profile', {
         headers: {
           'Authorization': `Bearer ${initData}`
@@ -52,7 +59,9 @@ export const useProfile = () => {
       } else {
         throw new Error(result.error || 'Ошибка загрузки профиля')
       }
+      */
     } catch (err) {
+      console.error('Ошибка в fetchProfile:', err)
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка')
     } finally {
       setLoading(false)
@@ -64,22 +73,19 @@ export const useProfile = () => {
       setLoading(true)
       setError(null)
       
-      // Получаем данные авторизации
-      const initData = window.Telegram?.WebApp?.initData || ''
-      
-      // Если нет данных Telegram, имитируем успешное обновление
-      if (!initData || !window.Telegram?.WebApp?.initDataUnsafe?.user) {
-        console.log('Нет данных Telegram, имитируем обновление профиля')
-        if (profile) {
-          setProfile({
-            ...profile,
-            ...data
-          })
-        }
-        setLoading(false)
-        return true
+      // Временно всегда используем тестовые данные
+      console.log('Имитируем обновление профиля')
+      if (profile) {
+        setProfile({
+          ...profile,
+          ...data
+        })
       }
+      setLoading(false)
+      return true
       
+      // Закомментируем реальный API запрос
+      /*
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: {
@@ -101,7 +107,9 @@ export const useProfile = () => {
       } else {
         throw new Error(result.error || 'Ошибка обновления профиля')
       }
+      */
     } catch (err) {
+      console.error('Ошибка в updateProfile:', err)
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка')
       return false
     } finally {
