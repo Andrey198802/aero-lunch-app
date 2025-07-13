@@ -551,6 +551,9 @@ app.post('/api/telegram/webhook', async (req, res) => {
 
       // Обработка команд
       if (text === '/start') {
+        // Устанавливаем кнопку меню для этого пользователя
+        await setMenuButtonForUser(chatId);
+        
         // Сначала отправляем фото с описанием
         await sendTelegramPhoto(chatId, 
           'https://raw.githubusercontent.com/Andrey198802/aero-lunch-app/main/public/logo_aero2.svg',
@@ -671,11 +674,41 @@ async function sendTelegramPhoto(chatId: number, photoUrl: string, caption: stri
   }
 }
 
-// Функция для расчета общей суммы заказа
-function calculateTotalAmount(items: any[]): number {
-  return items.reduce((total, item) => {
-    return total + (item.price * item.quantity);
-  }, 0);
+// Функция для установки кнопки меню для конкретного пользователя
+async function setMenuButtonForUser(chatId: number) {
+  try {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) {
+      console.error('Токен бота не найден');
+      return;
+    }
+
+    const url = `https://api.telegram.org/bot${botToken}/setChatMenuButton`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        menu_button: {
+          type: 'web_app',
+          text: 'МЕНЮ',
+          web_app: {
+            url: 'http://158.160.177.251:3000'
+          }
+        }
+      }),
+    });
+
+    if (response.ok) {
+      console.log(`Кнопка меню установлена для пользователя ${chatId}`);
+    } else {
+      console.error('Ошибка установки кнопки меню для пользователя:', await response.text());
+    }
+  } catch (error) {
+    console.error('Ошибка установки кнопки меню для пользователя:', error);
+  }
 }
 
 // Функция для установки кнопки меню бота
@@ -698,7 +731,7 @@ async function setMenuButton() {
           type: 'web_app',
           text: 'МЕНЮ',
           web_app: {
-            url: 'https://158.160.177.251:3000' // URL вашего веб-приложения
+            url: 'http://158.160.177.251:3000' // Изменено на HTTP
           }
         }
       }),
@@ -706,12 +739,21 @@ async function setMenuButton() {
 
     if (response.ok) {
       console.log('Кнопка меню успешно установлена');
+      const result = await response.json();
+      console.log('Результат:', result);
     } else {
       console.error('Ошибка установки кнопки меню:', await response.text());
     }
   } catch (error) {
     console.error('Ошибка установки кнопки меню:', error);
   }
+}
+
+// Функция для расчета общей суммы заказа
+function calculateTotalAmount(items: any[]): number {
+  return items.reduce((total, item) => {
+    return total + (item.price * item.quantity);
+  }, 0);
 }
 
 // Обработчик ошибок
