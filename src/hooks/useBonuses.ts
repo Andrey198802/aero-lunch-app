@@ -5,22 +5,64 @@ export const useBonuses = () => {
   const [bonusHistory, setBonusHistory] = useState<BonusHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0
-  })
+  const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
 
-  const fetchBonusHistory = async (page: number = 1, append: boolean = false) => {
+  const fetchBonuses = async (pageNum: number = 1) => {
     try {
       setLoading(true)
       setError(null)
       
-      const response = await fetch(`/api/user/bonus-history?page=${page}&limit=${pagination.limit}`, {
+      // Получаем данные авторизации
+      const initData = window.Telegram?.WebApp?.initData || ''
+      
+      // Если нет данных Telegram, создаем тестовые данные
+      if (!initData || !window.Telegram?.WebApp?.initDataUnsafe?.user) {
+        console.log('Нет данных Telegram, используем тестовые данные для бонусов')
+        const testBonuses: BonusHistoryItem[] = [
+          {
+            id: 1,
+            amount: 50,
+            type: 'EARNED',
+            description: 'Бонусы за заказ #1001',
+            orderId: 1001,
+            balanceBefore: 100,
+            balanceAfter: 150,
+            createdAt: new Date(Date.now() - 86400000).toISOString() // 1 день назад
+          },
+          {
+            id: 2,
+            amount: -30,
+            type: 'USED',
+            description: 'Использованы при оплате заказа #1002',
+            orderId: 1002,
+            balanceBefore: 150,
+            balanceAfter: 120,
+            createdAt: new Date(Date.now() - 172800000).toISOString() // 2 дня назад
+          },
+          {
+            id: 3,
+            amount: 25,
+            type: 'EARNED',
+            description: 'Бонусы за заказ #1003',
+            orderId: 1003,
+            balanceBefore: 120,
+            balanceAfter: 145,
+            createdAt: new Date(Date.now() - 259200000).toISOString() // 3 дня назад
+          }
+        ]
+        
+        if (pageNum === 1) {
+          setBonusHistory(testBonuses)
+        }
+        setHasMore(false)
+        setLoading(false)
+        return
+      }
+      
+      const response = await fetch(`/api/user/bonuses?page=${pageNum}&limit=10`, {
         headers: {
-          'Authorization': `Bearer ${window.Telegram?.WebApp?.initData || ''}`
+          'Authorization': `Bearer ${initData}`
         }
       })
       
@@ -31,16 +73,16 @@ export const useBonuses = () => {
       const result: ApiResponse<PaginatedResponse<BonusHistoryItem>> = await response.json()
       
       if (result.success) {
-        const { data, pagination: paginationData } = result.data
+        const newBonuses = result.data.data
         
-        if (append) {
-          setBonusHistory(prev => [...prev, ...data])
+        if (pageNum === 1) {
+          setBonusHistory(newBonuses)
         } else {
-          setBonusHistory(data)
+          setBonusHistory(prev => [...prev, ...newBonuses])
         }
         
-        setPagination(paginationData)
-        setHasMore(paginationData.page < paginationData.totalPages)
+        setHasMore(result.data.pagination.page < result.data.pagination.totalPages)
+        setPage(pageNum)
       } else {
         throw new Error(result.error || 'Ошибка загрузки истории бонусов')
       }
@@ -53,25 +95,20 @@ export const useBonuses = () => {
 
   const loadMore = () => {
     if (!loading && hasMore) {
-      fetchBonusHistory(pagination.page + 1, true)
+      fetchBonuses(page + 1)
     }
   }
 
-  const refresh = () => {
-    fetchBonusHistory(1, false)
-  }
-
   useEffect(() => {
-    fetchBonusHistory()
+    fetchBonuses()
   }, [])
 
   return {
     bonusHistory,
     loading,
     error,
-    pagination,
     hasMore,
     loadMore,
-    refresh
+    refetch: () => fetchBonuses(1)
   }
 } 

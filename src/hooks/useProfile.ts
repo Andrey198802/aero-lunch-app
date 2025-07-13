@@ -11,9 +11,33 @@ export const useProfile = () => {
       setLoading(true)
       setError(null)
       
+      // Получаем данные авторизации
+      const initData = window.Telegram?.WebApp?.initData || ''
+      
+      // Если нет данных Telegram, создаем тестовые данные
+      if (!initData || !window.Telegram?.WebApp?.initDataUnsafe?.user) {
+        console.log('Нет данных Telegram, используем тестовые данные')
+        setProfile({
+          id: 1,
+          telegramId: 123456789,
+          firstName: 'Тестовый',
+          lastName: 'Пользователь',
+          username: 'testuser',
+          phone: '+7 (999) 123-45-67',
+          email: 'test@example.com',
+          birthDate: '1990-01-01',
+          registrationDate: new Date().toISOString(),
+          totalBonuses: 150,
+          totalOrders: 5,
+          totalSpent: 2500
+        })
+        setLoading(false)
+        return
+      }
+      
       const response = await fetch('/api/user/profile', {
         headers: {
-          'Authorization': `Bearer ${window.Telegram?.WebApp?.initData || ''}`
+          'Authorization': `Bearer ${initData}`
         }
       })
       
@@ -40,11 +64,27 @@ export const useProfile = () => {
       setLoading(true)
       setError(null)
       
+      // Получаем данные авторизации
+      const initData = window.Telegram?.WebApp?.initData || ''
+      
+      // Если нет данных Telegram, имитируем успешное обновление
+      if (!initData || !window.Telegram?.WebApp?.initDataUnsafe?.user) {
+        console.log('Нет данных Telegram, имитируем обновление профиля')
+        if (profile) {
+          setProfile({
+            ...profile,
+            ...data
+          })
+        }
+        setLoading(false)
+        return true
+      }
+      
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${window.Telegram?.WebApp?.initData || ''}`
+          'Authorization': `Bearer ${initData}`
         },
         body: JSON.stringify(data)
       })

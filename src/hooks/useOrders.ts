@@ -5,22 +5,86 @@ export const useOrders = () => {
   const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0
-  })
+  const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
 
-  const fetchOrderHistory = async (page: number = 1, append: boolean = false) => {
+  const fetchOrders = async (pageNum: number = 1) => {
     try {
       setLoading(true)
       setError(null)
       
-      const response = await fetch(`/api/user/orders?page=${page}&limit=${pagination.limit}`, {
+      // Получаем данные авторизации
+      const initData = window.Telegram?.WebApp?.initData || ''
+      
+      // Если нет данных Telegram, создаем тестовые данные
+      if (!initData || !window.Telegram?.WebApp?.initDataUnsafe?.user) {
+        console.log('Нет данных Telegram, используем тестовые данные для заказов')
+        const testOrders: OrderHistoryItem[] = [
+          {
+            id: 1001,
+            status: 'DELIVERED',
+            totalAmount: 890,
+            bonusesUsed: 50,
+            bonusesEarned: 25,
+            promoCode: 'FIRST10',
+            promoDiscount: 90,
+            items: [
+              {
+                id: 1,
+                name: 'Каша овсяная со свежими ягодами',
+                price: 450,
+                quantity: 1,
+                imageUrl: '/logo_aero1.svg'
+              },
+              {
+                id: 2,
+                name: 'Каша пшённая с чатни из тыквы',
+                price: 490,
+                quantity: 1,
+                imageUrl: '/logo_aero1.svg'
+              }
+            ],
+            createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 день назад
+            updatedAt: new Date(Date.now() - 86400000 + 3600000).toISOString() // 1 день назад + 1 час
+          },
+          {
+            id: 1002,
+            status: 'PREPARING',
+            totalAmount: 650,
+            bonusesUsed: 0,
+            bonusesEarned: 30,
+            items: [
+              {
+                id: 3,
+                name: 'Сэндвич с авокадо',
+                price: 350,
+                quantity: 1,
+                imageUrl: '/logo_aero1.svg'
+              },
+              {
+                id: 4,
+                name: 'Смузи ягодный',
+                price: 300,
+                quantity: 1,
+                imageUrl: '/logo_aero1.svg'
+              }
+            ],
+            createdAt: new Date(Date.now() - 3600000).toISOString(), // 1 час назад
+            updatedAt: new Date(Date.now() - 1800000).toISOString() // 30 минут назад
+          }
+        ]
+        
+        if (pageNum === 1) {
+          setOrderHistory(testOrders)
+        }
+        setHasMore(false)
+        setLoading(false)
+        return
+      }
+      
+      const response = await fetch(`/api/user/orders?page=${pageNum}&limit=10`, {
         headers: {
-          'Authorization': `Bearer ${window.Telegram?.WebApp?.initData || ''}`
+          'Authorization': `Bearer ${initData}`
         }
       })
       
@@ -31,16 +95,16 @@ export const useOrders = () => {
       const result: ApiResponse<PaginatedResponse<OrderHistoryItem>> = await response.json()
       
       if (result.success) {
-        const { data, pagination: paginationData } = result.data
+        const newOrders = result.data.data
         
-        if (append) {
-          setOrderHistory(prev => [...prev, ...data])
+        if (pageNum === 1) {
+          setOrderHistory(newOrders)
         } else {
-          setOrderHistory(data)
+          setOrderHistory(prev => [...prev, ...newOrders])
         }
         
-        setPagination(paginationData)
-        setHasMore(paginationData.page < paginationData.totalPages)
+        setHasMore(result.data.pagination.page < result.data.pagination.totalPages)
+        setPage(pageNum)
       } else {
         throw new Error(result.error || 'Ошибка загрузки истории заказов')
       }
@@ -53,12 +117,8 @@ export const useOrders = () => {
 
   const loadMore = () => {
     if (!loading && hasMore) {
-      fetchOrderHistory(pagination.page + 1, true)
+      fetchOrders(page + 1)
     }
-  }
-
-  const refresh = () => {
-    fetchOrderHistory(1, false)
   }
 
   const getStatusText = (status: OrderHistoryItem['status']) => {
@@ -66,8 +126,8 @@ export const useOrders = () => {
       'PENDING': 'Ожидает подтверждения',
       'CONFIRMED': 'Подтверждён',
       'PREPARING': 'Готовится',
-      'READY': 'Готов',
-      'DELIVERED': 'Доставлен',
+      'READY': 'Готов к выдаче',
+      'DELIVERED': 'Выдан',
       'CANCELLED': 'Отменён'
     }
     return statusMap[status] || status
@@ -86,18 +146,17 @@ export const useOrders = () => {
   }
 
   useEffect(() => {
-    fetchOrderHistory()
+    fetchOrders()
   }, [])
 
   return {
     orderHistory,
     loading,
     error,
-    pagination,
     hasMore,
     loadMore,
-    refresh,
     getStatusText,
-    getStatusColor
+    getStatusColor,
+    refetch: () => fetchOrders(1)
   }
 } 
