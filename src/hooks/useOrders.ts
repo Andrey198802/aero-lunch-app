@@ -20,7 +20,63 @@ export const useOrders = () => {
       console.log('initData:', initData)
       console.log('user:', user)
       
-      // Временно всегда используем тестовые данные
+      // Если есть данные Telegram, пробуем загрузить заказы с сервера
+      if (user && initData) {
+        console.log('Загружаем заказы с сервера')
+        try {
+          const response = await fetch(`/api/user/orders?page=${pageNum}&limit=10`, {
+            headers: {
+              'x-telegram-init-data': initData
+            }
+          })
+          
+          if (response.ok) {
+            const result = await response.json()
+            console.log('Заказы получены с сервера:', result)
+            
+            // Преобразуем данные сервера в формат фронтенда
+            const orders = result.orders || []
+            const transformedOrders: OrderHistoryItem[] = orders.map((order: any) => ({
+              id: order.id,
+              status: order.status,
+              totalAmount: Number(order.totalAmount),
+              bonusesUsed: Number(order.bonusesUsed) || 0,
+              bonusesEarned: Number(order.bonusesEarned) || 0,
+              promoCode: order.promoCode || undefined,
+              promoDiscount: Number(order.discountAmount) || undefined,
+              items: JSON.parse(order.items || '[]').map((item: any) => ({
+                id: item.id,
+                name: item.title || item.name,
+                price: item.price,
+                quantity: item.quantity,
+                imageUrl: item.imageUrl || '/logo_aero1.svg'
+              })),
+              createdAt: order.createdAt,
+              updatedAt: order.updatedAt
+            }))
+            
+            if (pageNum === 1) {
+              setOrderHistory(transformedOrders)
+            } else {
+              setOrderHistory(prev => [...prev, ...transformedOrders])
+            }
+            
+            // Проверяем есть ли еще страницы
+            const pagination = result.pagination
+            setHasMore(pagination ? pagination.page < pagination.totalPages : false)
+            
+            setLoading(false)
+            return
+          } else {
+            console.log('Ошибка загрузки заказов с сервера, используем тестовые данные')
+          }
+        } catch (apiError) {
+          console.error('Ошибка API заказов:', apiError)
+          console.log('Используем тестовые данные как fallback')
+        }
+      }
+      
+      // Fallback: используем тестовые данные
       console.log('Используем тестовые данные для заказов')
       const testOrders: OrderHistoryItem[] = [
         {
@@ -82,37 +138,6 @@ export const useOrders = () => {
       }
       setHasMore(false)
       setLoading(false)
-      return
-      
-      // Закомментируем реальный API запрос
-      /*
-      const response = await fetch(`/api/user/orders?page=${pageNum}&limit=10`, {
-        headers: {
-          'Authorization': `Bearer ${initData}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Ошибка загрузки истории заказов')
-      }
-      
-      const result: ApiResponse<PaginatedResponse<OrderHistoryItem>> = await response.json()
-      
-      if (result.success) {
-        const newOrders = result.data.data
-        
-        if (pageNum === 1) {
-          setOrderHistory(newOrders)
-        } else {
-          setOrderHistory(prev => [...prev, ...newOrders])
-        }
-        
-        setHasMore(result.data.pagination.page < result.data.pagination.totalPages)
-        setPage(pageNum)
-      } else {
-        throw new Error(result.error || 'Ошибка загрузки истории заказов')
-      }
-      */
     } catch (err) {
       console.error('Ошибка в fetchOrders:', err)
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка')

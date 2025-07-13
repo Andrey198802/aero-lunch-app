@@ -18,17 +18,76 @@ export const useProfile = () => {
       console.log('=== ОТЛАДКА ПРОФИЛЯ ===')
       console.log('initData:', initData)
       console.log('user:', user)
-      console.log('window.Telegram:', window.Telegram)
-      console.log('WebApp:', window.Telegram?.WebApp)
       
-      // Временно всегда используем тестовые данные для отладки
-      console.log('Используем тестовые данные для отладки')
+      // Если есть данные пользователя Telegram, пробуем загрузить профиль с сервера
+      if (user && initData) {
+        console.log('Загружаем профиль с сервера')
+        try {
+          const response = await fetch('/api/user/profile', {
+            headers: {
+              'x-telegram-init-data': initData
+            }
+          })
+          
+          if (response.ok) {
+            const serverProfile = await response.json()
+            console.log('Профиль получен с сервера:', serverProfile)
+            
+            // Преобразуем данные сервера в формат фронтенда
+            setProfile({
+              id: serverProfile.id || 1,
+              telegramId: user.id,
+              firstName: serverProfile.firstName || user.first_name,
+              lastName: serverProfile.lastName || user.last_name || '',
+              username: serverProfile.username || user.username || '',
+              phone: serverProfile.phone || '',
+              email: serverProfile.email || '',
+              birthDate: serverProfile.birthDate || '',
+              registrationDate: serverProfile.registrationDate || new Date().toISOString(),
+              totalBonuses: Number(serverProfile.totalBonuses) || 0,
+              totalOrders: serverProfile.totalOrders || 0,
+              totalSpent: Number(serverProfile.totalSpent) || 0
+            })
+            setLoading(false)
+            return
+          } else {
+            console.log('Ошибка загрузки с сервера, используем данные Telegram')
+          }
+        } catch (apiError) {
+          console.error('Ошибка API:', apiError)
+          console.log('Используем данные Telegram как fallback')
+        }
+      }
+      
+      // Fallback: создаем профиль на основе данных Telegram
+      if (user) {
+        console.log('Создаем профиль на основе данных Telegram')
+        setProfile({
+          id: 1,
+          telegramId: user.id,
+          firstName: user.first_name,
+          lastName: user.last_name || '',
+          username: user.username || '',
+          phone: '',
+          email: '',
+          birthDate: '',
+          registrationDate: new Date().toISOString(),
+          totalBonuses: 0,
+          totalOrders: 0,
+          totalSpent: 0
+        })
+        setLoading(false)
+        return
+      }
+      
+      // Последний fallback для тестирования без Telegram
+      console.log('Используем тестовые данные (нет данных Telegram)')
       setProfile({
         id: 1,
-        telegramId: user?.id || 123456789,
-        firstName: user?.first_name || 'Тестовый',
-        lastName: user?.last_name || 'Пользователь',
-        username: user?.username || 'testuser',
+        telegramId: 123456789,
+        firstName: 'Тестовый',
+        lastName: 'Пользователь',
+        username: 'testuser',
         phone: '+7 (999) 123-45-67',
         email: 'test@example.com',
         birthDate: '1990-01-01',
@@ -38,28 +97,6 @@ export const useProfile = () => {
         totalSpent: 2500
       })
       setLoading(false)
-      return
-      
-      // Закомментируем реальный API запрос для отладки
-      /*
-      const response = await fetch('/api/user/profile', {
-        headers: {
-          'Authorization': `Bearer ${initData}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Ошибка загрузки профиля')
-      }
-      
-      const result: ApiResponse<UserProfile> = await response.json()
-      
-      if (result.success) {
-        setProfile(result.data)
-      } else {
-        throw new Error(result.error || 'Ошибка загрузки профиля')
-      }
-      */
     } catch (err) {
       console.error('Ошибка в fetchProfile:', err)
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка')
@@ -73,8 +110,46 @@ export const useProfile = () => {
       setLoading(true)
       setError(null)
       
-      // Временно всегда используем тестовые данные
-      console.log('Имитируем обновление профиля')
+      const initData = window.Telegram?.WebApp?.initData || ''
+      
+      // Если есть данные Telegram, пробуем обновить на сервере
+      if (initData) {
+        try {
+          const response = await fetch('/api/user/profile', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-telegram-init-data': initData
+            },
+            body: JSON.stringify(data)
+          })
+          
+          if (response.ok) {
+            const result = await response.json()
+            if (result.success && result.user) {
+              // Обновляем профиль данными с сервера
+              setProfile(prev => prev ? {
+                ...prev,
+                firstName: result.user.firstName || prev.firstName,
+                lastName: result.user.lastName || prev.lastName,
+                phone: result.user.phone || prev.phone,
+                email: result.user.email || prev.email,
+                birthDate: result.user.birthDate || prev.birthDate,
+                totalBonuses: Number(result.user.totalBonuses) || prev.totalBonuses,
+                totalOrders: result.user.totalOrders || prev.totalOrders,
+                totalSpent: Number(result.user.totalSpent) || prev.totalSpent
+              } : null)
+              setLoading(false)
+              return true
+            }
+          }
+        } catch (apiError) {
+          console.error('Ошибка API обновления:', apiError)
+        }
+      }
+      
+      // Fallback: обновляем локально
+      console.log('Обновляем профиль локально:', data)
       if (profile) {
         setProfile({
           ...profile,
@@ -83,31 +158,6 @@ export const useProfile = () => {
       }
       setLoading(false)
       return true
-      
-      // Закомментируем реальный API запрос
-      /*
-      const response = await fetch('/api/user/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${initData}`
-        },
-        body: JSON.stringify(data)
-      })
-      
-      if (!response.ok) {
-        throw new Error('Ошибка обновления профиля')
-      }
-      
-      const result: ApiResponse<UserProfile> = await response.json()
-      
-      if (result.success) {
-        setProfile(result.data)
-        return true
-      } else {
-        throw new Error(result.error || 'Ошибка обновления профиля')
-      }
-      */
     } catch (err) {
       console.error('Ошибка в updateProfile:', err)
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка')

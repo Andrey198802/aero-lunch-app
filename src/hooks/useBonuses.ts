@@ -20,7 +20,56 @@ export const useBonuses = () => {
       console.log('initData:', initData)
       console.log('user:', user)
       
-      // Временно всегда используем тестовые данные
+      // Если есть данные Telegram, пробуем загрузить бонусы с сервера
+      if (user && initData) {
+        console.log('Загружаем бонусы с сервера')
+        try {
+          const response = await fetch(`/api/user/bonus-history?page=${pageNum}&limit=10`, {
+            headers: {
+              'x-telegram-init-data': initData
+            }
+          })
+          
+          if (response.ok) {
+            const result = await response.json()
+            console.log('Бонусы получены с сервера:', result)
+            
+            // Преобразуем данные сервера в формат фронтенда
+            const bonuses = result.bonusHistory || []
+            const transformedBonuses: BonusHistoryItem[] = bonuses.map((bonus: any) => ({
+              id: bonus.id,
+              amount: Number(bonus.amount),
+              type: bonus.type === 'SPENT' ? 'USED' : bonus.type, // Преобразуем SPENT в USED
+              description: bonus.description,
+              orderId: bonus.orderId || undefined,
+              balanceBefore: Number(bonus.balanceBefore),
+              balanceAfter: Number(bonus.balanceAfter),
+              expiresAt: bonus.expiresAt || undefined,
+              createdAt: bonus.createdAt
+            }))
+            
+            if (pageNum === 1) {
+              setBonusHistory(transformedBonuses)
+            } else {
+              setBonusHistory(prev => [...prev, ...transformedBonuses])
+            }
+            
+            // Проверяем есть ли еще страницы
+            const pagination = result.pagination
+            setHasMore(pagination ? pagination.page < pagination.totalPages : false)
+            
+            setLoading(false)
+            return
+          } else {
+            console.log('Ошибка загрузки бонусов с сервера, используем тестовые данные')
+          }
+        } catch (apiError) {
+          console.error('Ошибка API бонусов:', apiError)
+          console.log('Используем тестовые данные как fallback')
+        }
+      }
+      
+      // Fallback: используем тестовые данные
       console.log('Используем тестовые данные для бонусов')
       const testBonuses: BonusHistoryItem[] = [
         {
@@ -60,37 +109,6 @@ export const useBonuses = () => {
       }
       setHasMore(false)
       setLoading(false)
-      return
-      
-      // Закомментируем реальный API запрос
-      /*
-      const response = await fetch(`/api/user/bonuses?page=${pageNum}&limit=10`, {
-        headers: {
-          'Authorization': `Bearer ${initData}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Ошибка загрузки истории бонусов')
-      }
-      
-      const result: ApiResponse<PaginatedResponse<BonusHistoryItem>> = await response.json()
-      
-      if (result.success) {
-        const newBonuses = result.data.data
-        
-        if (pageNum === 1) {
-          setBonusHistory(newBonuses)
-        } else {
-          setBonusHistory(prev => [...prev, ...newBonuses])
-        }
-        
-        setHasMore(result.data.pagination.page < result.data.pagination.totalPages)
-        setPage(pageNum)
-      } else {
-        throw new Error(result.error || 'Ошибка загрузки истории бонусов')
-      }
-      */
     } catch (err) {
       console.error('Ошибка в fetchBonuses:', err)
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка')
