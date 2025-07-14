@@ -1,76 +1,48 @@
 #!/bin/bash
-# Скрипт для обновления Aero Lunch Bot на сервере
-# Использование: ./deploy.sh
 
-set -e  # Прекратить выполнение при ошибке
+# 🚀 Быстрый деплой Aero Lunch
+# Использование: ./deploy.sh "Описание изменений"
 
-echo "🚀 Начинаем обновление Aero Lunch Bot..."
+set -e
 
-# Цвета для вывода
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+echo "🚀 Начинаем деплой Aero Lunch..."
 
-# Функция для вывода сообщений
-log() {
-    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
-}
-
-error() {
-    echo -e "${RED}[ERROR] $1${NC}"
+# Проверяем параметры
+if [ -z "$1" ]; then
+    echo "❌ Укажите описание изменений!"
+    echo "Использование: ./deploy.sh \"Описание изменений\""
     exit 1
-}
-
-warning() {
-    echo -e "${YELLOW}[WARNING] $1${NC}"
-}
-
-# Проверяем SSH подключение
-SSH_KEY="$HOME/.ssh/aero_lunch_key"
-SERVER_USER="ubuntu"
-SERVER_IP="158.160.177.251"
-SERVER_PATH="/home/ubuntu/aero-lunch-app"
-
-if [ ! -f "$SSH_KEY" ]; then
-    error "SSH ключ не найден: $SSH_KEY"
 fi
 
-log "Подключаемся к серверу..."
+COMMIT_MESSAGE="$1"
 
-# Выполняем команды на сервере
-ssh -i "$SSH_KEY" "$SERVER_USER@$SERVER_IP" << 'EOF'
-    set -e
-    
-    # Переходим в папку проекта
-    cd /home/ubuntu/aero-lunch-app
-    
-    echo "📥 Получаем последние изменения..."
-    git stash || true
-    git pull origin main
-    
-    echo "📦 Устанавливаем зависимости фронтенда..."
-    npm install
-    
-    echo "🔨 Собираем фронтенд..."
-    npm run build
-    
-    echo "📦 Устанавливаем зависимости бэкенда..."
-    cd server
-    npm install
-    
-    echo "🗃️ Обновляем базу данных..."
-    npx prisma generate
-    npx prisma db push
-    
-    echo "🔄 Перезапускаем сервисы..."
-    sudo systemctl restart aero-lunch
-    
-    echo "✅ Проверяем статус сервиса..."
-    sudo systemctl status aero-lunch --no-pager
-    
-    echo "🎉 Обновление завершено!"
-EOF
+# Собираем фронтенд
+echo "📦 Собираем фронтенд..."
+npm run build
 
-log "Деплой завершен успешно!"
-log "Проверьте бота: https://t.me/aero_lunch_bot" 
+# Коммитим и пушим
+echo "📤 Отправляем изменения в Git..."
+git add -A
+git commit -m "$COMMIT_MESSAGE"
+git push origin main
+
+echo "⏳ Ждем автоматический деплой (30 секунд)..."
+sleep 30
+
+# Проверяем что деплой прошел
+echo "🔍 Проверяем деплой..."
+RESPONSE=$(curl -s -X POST -H "Content-Type: application/json" \
+    -d '{"items":[{"id":1,"title":"Тест деплоя","price":1000,"quantity":1}],"deliveryType":"TAKEAWAY"}' \
+    "https://aero-lunch.ru/api/orders/test")
+
+if echo "$RESPONSE" | grep -q "success"; then
+    echo "✅ Деплой успешно завершен!"
+    echo "🌐 Проверьте: https://aero-lunch.ru"
+else
+    echo "⚠️ Возможно есть проблемы с деплоем"
+    echo "📋 Ответ сервера: $RESPONSE"
+    echo "🔧 Попробуйте принудительный webhook:"
+    echo "curl -X POST -H \"Content-Type: application/json\" -d '{\"ref\":\"refs/heads/main\",\"action\":\"deploy\"}' \"https://aero-lunch.ru/api/webhook\""
+fi
+
+echo "🎉 Готово!" 
