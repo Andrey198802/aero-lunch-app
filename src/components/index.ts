@@ -1,6 +1,8 @@
 export { default as LandingPage } from './LandingPage'
 export { default as LoadingPage } from './LoadingPage'
 export { default as MenuPage } from './MenuPage'
+export { default as CartPage } from './CartPage'
+export { default as CheckoutPage } from './CheckoutPage'
 export { ProfilePage } from './ProfilePage'
 export { AdminPage } from './AdminPage'
 export { UsersManagement } from './UsersManagement'
