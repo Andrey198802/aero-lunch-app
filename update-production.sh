@@ -55,6 +55,9 @@ echo "🔧 Обновляем бэкенд..."
 cd server
 npm ci
 
+echo "🔄 Генерируем Prisma Client..."
+npx prisma generate
+
 echo "🔄 Перезапускаем сервис..."
 sudo systemctl restart aero-lunch-backend
 
