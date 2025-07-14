@@ -12,6 +12,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [currentView, setCurrentView] = useState<'dashboard' | 'users' | 'orders'>('dashboard')
+  
+  console.log('AdminPage render, currentView:', currentView);
 
   // Временный пароль для демонстрации (в продакшене должен быть в env)
   const ADMIN_PASSWORD = 'admin123'
@@ -113,6 +115,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
 
   // Показать управление заказами
   if (currentView === 'orders') {
+    console.log('Показываем OrdersManagement');
     return <OrdersManagement onBack={() => setCurrentView('dashboard')} />
   }
 
@@ -177,7 +180,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
             </h3>
             <div className="space-y-3">
               <button 
-                onClick={() => setCurrentView('orders')}
+                onClick={() => {
+                  console.log('Кнопка "Все заказы" нажата');
+                  setCurrentView('orders');
+                }}
                 className="w-full text-left px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors"
               >
                 📋 Все заказы
