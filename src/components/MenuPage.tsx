@@ -98,61 +98,56 @@ const ActiveOrderIndicator: React.FC<{
   return (
     <div className="mx-4 mb-4">
       <div 
-        className={`rounded-2xl border-2 p-4 cursor-pointer transition-all hover:shadow-md ${getStatusColor(order.status)}`}
+        className="bg-white rounded-2xl border border-gray-200 p-4 cursor-pointer transition-all hover:shadow-md"
         onClick={() => onTrackOrder(order)}
       >
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-3">
-            <div className="text-2xl">
-              {getStatusIcon(order.status)}
+          <div>
+            <div className="font-bold text-lg text-gray-900">
+              {getStatusText(order.status)}
             </div>
-            <div>
-              <div className="font-bold text-lg">
-                {getStatusText(order.status)}
-              </div>
-              <div className="text-sm opacity-75">
-                Заказ #{order.orderNumber.length > 8 ? `${order.orderNumber.substring(0, 8)}...` : order.orderNumber}
-              </div>
+            <div className="text-sm text-gray-500">
+              Заказ #{order.orderNumber.length > 8 ? `${order.orderNumber.substring(0, 8)}...` : order.orderNumber}
             </div>
           </div>
           
           <div className="text-right">
-            <div className="font-bold text-lg">
+            <div className="font-bold text-lg text-gray-900">
               {order.totalAmount.toLocaleString('ru-RU')} ₽
             </div>
-            <div className="text-sm opacity-75">
+            <div className="text-sm text-gray-500">
               {order.items.length} {order.items.length === 1 ? 'позиция' : 'позиций'}
             </div>
           </div>
         </div>
         
         {/* Индикатор прогресса с кружочками */}
-        <div className="flex items-center justify-center space-x-2">
-          <div className={`w-3 h-3 rounded-full ${
+        <div className="flex items-center justify-center space-x-4">
+          <div className={`w-4 h-4 rounded-full border-2 ${
             order.status === 'PENDING' 
-              ? 'bg-orange-500 border-2 border-orange-600' 
+              ? 'bg-orange-500 border-orange-500' 
               : ['CONFIRMED', 'PREPARING', 'READY', 'DELIVERED'].includes(order.status)
-                ? 'bg-orange-500'
-                : 'bg-gray-300'
+                ? 'bg-orange-500 border-orange-500'
+                : 'bg-gray-200 border-gray-300'
           }`}></div>
-          <div className={`w-3 h-3 rounded-full ${
+          <div className={`w-4 h-4 rounded-full border-2 ${
             order.status === 'CONFIRMED' 
-              ? 'bg-blue-500 border-2 border-blue-600' 
+              ? 'bg-blue-500 border-blue-500' 
               : ['PREPARING', 'READY', 'DELIVERED'].includes(order.status)
-                ? 'bg-blue-500'
-                : 'bg-gray-300'
+                ? 'bg-blue-500 border-blue-500'
+                : 'bg-gray-200 border-gray-300'
           }`}></div>
-          <div className={`w-3 h-3 rounded-full ${
+          <div className={`w-4 h-4 rounded-full border-2 ${
             order.status === 'PREPARING' 
-              ? 'bg-yellow-500 border-2 border-yellow-600' 
+              ? 'bg-yellow-500 border-yellow-500' 
               : ['READY', 'DELIVERED'].includes(order.status)
-                ? 'bg-yellow-500'
-                : 'bg-gray-300'
+                ? 'bg-yellow-500 border-yellow-500'
+                : 'bg-gray-200 border-gray-300'
           }`}></div>
-          <div className={`w-3 h-3 rounded-full ${
-            order.status === 'READY' 
-              ? 'bg-green-500 border-2 border-green-600' 
-              : 'bg-gray-300'
+          <div className={`w-4 h-4 rounded-full border-2 ${
+            ['READY', 'DELIVERED'].includes(order.status)
+              ? 'bg-green-500 border-green-500'
+              : 'bg-gray-200 border-gray-300'
           }`}></div>
         </div>
       </div>
