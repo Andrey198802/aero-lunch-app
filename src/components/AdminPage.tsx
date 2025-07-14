@@ -179,17 +179,20 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
               Управление заказами
             </h3>
             <div className="space-y-3">
-              <button 
+              <div 
                 onClick={() => {
                   alert('Кнопка "Все заказы" нажата!');
                   console.log('Кнопка "Все заказы" нажата');
                   setCurrentView('orders');
                 }}
+                onMouseDown={() => {
+                  console.log('MouseDown на кнопке "Все заказы"');
+                }}
                 className="w-full text-left px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors cursor-pointer"
-                style={{ pointerEvents: 'auto', zIndex: 1 }}
+                style={{ pointerEvents: 'auto', zIndex: 1000, userSelect: 'none' }}
               >
                 📋 Все заказы
-              </button>
+              </div>
               <button className="w-full text-left px-4 py-2 bg-yellow-50 text-yellow-700 rounded-md hover:bg-yellow-100 transition-colors">
                 ⏳ Ожидающие
               </button>
