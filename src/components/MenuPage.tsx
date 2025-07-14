@@ -2563,7 +2563,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
       {/* Маленькое модальное окно статуса заказа снизу */}
       {showOrderStatusModal && activeOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50">
-          <div className="bg-white rounded-t-2xl w-full max-w-md mx-4 mb-4 animate-slide-up">
+          <div className="bg-white rounded-t-3xl w-full max-w-md mx-4 mb-4 animate-slide-up shadow-xl">
             {/* Полоска для свайпа */}
             <div className="flex justify-center pt-3 pb-2">
               <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
@@ -2571,22 +2571,9 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
             
             {/* Содержимое модального окна */}
             <div className="px-6 pb-6">
-              {/* Заголовок с иконкой статуса */}
+              {/* Заголовок */}
               <div className="text-center mb-6">
-                <div className="text-4xl mb-2">
-                  {(() => {
-                    const iconMap = {
-                      'PENDING': '📝',
-                      'CONFIRMED': '✅', 
-                      'PREPARING': '👨‍🍳',
-                      'READY': '🎉',
-                      'DELIVERED': '🚚',
-                      'CANCELLED': '❌'
-                    }
-                    return iconMap[activeOrder.status] || '📦'
-                  })()}
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-1">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
                   {(() => {
                     const statusMap = {
                       'PENDING': 'В обработке',
@@ -2599,62 +2586,59 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
                     return statusMap[activeOrder.status] || activeOrder.status
                   })()}
                 </h3>
-                <p className="text-gray-600">
-                  Заказ #{activeOrder.orderNumber.length > 8 ? `${activeOrder.orderNumber.substring(0, 8)}...` : activeOrder.orderNumber}
-                </p>
               </div>
 
-              {/* Индикатор прогресса с кружочками и иконками */}
-              <div className="flex items-center justify-center space-x-3 mb-6">
+              {/* Индикатор прогресса с кружочками и иконками - в стиле карточек */}
+              <div className="flex items-center justify-between mb-8 px-4">
                 {/* В обработке */}
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all ${
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl transition-all border-2 ${
                   activeOrder.status === 'PENDING' 
-                    ? 'bg-orange-500 border-2 border-orange-600 shadow-lg text-white' 
+                    ? 'bg-orange-100 border-orange-400 shadow-lg' 
                     : ['CONFIRMED', 'PREPARING', 'READY', 'DELIVERED'].includes(activeOrder.status)
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-gray-300 text-gray-500'
+                      ? 'bg-orange-100 border-orange-400'
+                      : 'bg-gray-100 border-gray-300'
                 }`}>
                   📝
                 </div>
                 
                 {/* Подтвержден */}
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all ${
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl transition-all border-2 ${
                   activeOrder.status === 'CONFIRMED' 
-                    ? 'bg-blue-500 border-2 border-blue-600 shadow-lg text-white' 
+                    ? 'bg-blue-100 border-blue-400 shadow-lg' 
                     : ['PREPARING', 'READY', 'DELIVERED'].includes(activeOrder.status)
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-300 text-gray-500'
+                      ? 'bg-blue-100 border-blue-400'
+                      : 'bg-gray-100 border-gray-300'
                 }`}>
                   ✅
                 </div>
                 
                 {/* Готовим */}
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all ${
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl transition-all border-2 ${
                   activeOrder.status === 'PREPARING' 
-                    ? 'bg-yellow-500 border-2 border-yellow-600 shadow-lg text-white' 
+                    ? 'bg-yellow-100 border-yellow-400 shadow-lg' 
                     : ['READY', 'DELIVERED'].includes(activeOrder.status)
-                      ? 'bg-yellow-500 text-white'
-                      : 'bg-gray-300 text-gray-500'
+                      ? 'bg-yellow-100 border-yellow-400'
+                      : 'bg-gray-100 border-gray-300'
                 }`}>
                   👨‍🍳
                 </div>
                 
                 {/* Готов */}
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all ${
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl transition-all border-2 ${
                   activeOrder.status === 'READY' 
-                    ? 'bg-green-500 border-2 border-green-600 shadow-lg text-white' 
+                    ? 'bg-green-100 border-green-400 shadow-lg' 
                     : activeOrder.status === 'DELIVERED'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-300 text-gray-500'
+                      ? 'bg-green-100 border-green-400'
+                      : 'bg-gray-100 border-gray-300'
                 }`}>
                   🎉
                 </div>
               </div>
 
               {/* Информация о заказе */}
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Сумма:</span>
+              <div className="bg-gray-50 rounded-2xl p-4 mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600">Сумма заказа:</span>
                   <span className="font-bold text-gray-900">
                     {activeOrder.totalAmount.toLocaleString('ru-RU')} ₽
                   </span>
@@ -2671,7 +2655,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
               <div className="flex space-x-3">
                 <button
                   onClick={() => setShowOrderStatusModal(false)}
-                  className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                  className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-2xl font-medium hover:bg-gray-200 transition-colors"
                 >
                   Закрыть
                 </button>
@@ -2682,7 +2666,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
                       onNavigateToProfile()
                     }
                   }}
-                  className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                  className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-2xl font-medium hover:bg-blue-700 transition-colors"
                 >
                   Подробнее
                 </button>

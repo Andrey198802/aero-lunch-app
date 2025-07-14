@@ -24,7 +24,6 @@ export default function CheckoutPage({ cart, onNavigateBack, onOrderComplete }: 
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
-  const [showOrderConfirmation, setShowOrderConfirmation] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const getTotalPrice = () => {
@@ -193,7 +192,8 @@ export default function CheckoutPage({ cart, onNavigateBack, onOrderComplete }: 
       if (response.ok) {
         const result = await response.json()
         console.log('Заказ успешно создан:', result)
-        setShowOrderConfirmation(true)
+        // Сразу переходим на главное меню без модального окна
+        onOrderComplete()
       } else {
         const error = await response.json()
         console.error('Ошибка создания заказа:', error)
@@ -540,43 +540,6 @@ export default function CheckoutPage({ cart, onNavigateBack, onOrderComplete }: 
                 Как можно скорее
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Модальное окно подтверждения заказа */}
-      {showOrderConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4">
-            {/* Иконка успеха */}
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            </div>
-            
-            {/* Заголовок */}
-            <h2 className="text-xl font-bold text-center text-gray-900 mb-2">
-              Заказ принят!
-            </h2>
-            
-            {/* Описание */}
-            <p className="text-center text-gray-600 mb-6">
-              Мы свяжемся с вами в ближайшее время для подтверждения заказа
-            </p>
-            
-            {/* Кнопка ОК */}
-            <button
-              onClick={() => {
-                setShowOrderConfirmation(false)
-                onOrderComplete()
-              }}
-              className="w-full bg-black text-white py-3 rounded-2xl font-semibold"
-            >
-              ОК
-            </button>
           </div>
         </div>
       )}
