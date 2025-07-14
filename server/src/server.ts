@@ -108,6 +108,18 @@ const authenticateTelegramUser = async (req: any, res: any, next: any) => {
   }
 };
 
+// Middleware для проверки прав администратора
+const authenticateAdmin = (req: any, res: any, next: any) => {
+  const adminPassword = req.headers['x-admin-password'];
+  
+  // Временная проверка пароля (в продакшене использовать более безопасный способ)
+  if (adminPassword === 'admin123') {
+    next();
+  } else {
+    res.status(401).json({ error: 'Недостаточно прав доступа' });
+  }
+};
+
 // Базовый маршрут
 app.get('/', (req, res) => {
   res.json({ 
@@ -822,8 +834,8 @@ app.post('/api/telegram/update-menu-button', async (req, res) => {
   }
 });
 
-// API для получения всех заказов (админ)
-app.get('/api/admin/orders', authenticateTelegramUser, async (req: any, res: any) => {
+// API для получения всех заказов (админ) - ВЕБА И TELEGRAM
+app.get('/api/admin/orders', authenticateAdmin, async (req: any, res: any) => {
   try {
     const orders = await prisma.order.findMany({
       include: {
@@ -836,12 +848,18 @@ app.get('/api/admin/orders', authenticateTelegramUser, async (req: any, res: any
 
     const formattedOrders = orders.map(order => {
       // Парсим items из JSON
-      const items = Array.isArray(order.items) ? order.items : [];
+      let items = [];
+      try {
+        items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items || [];
+      } catch (e) {
+        console.error('Ошибка парсинга items:', e);
+        items = [];
+      }
       
       return {
         id: order.id,
         orderNumber: order.orderNumber,
-        customerName: order.customerName || `${order.user.firstName} ${order.user.lastName || ''}`.trim(),
+        customerName: order.customerName || `${order.user?.firstName || ''} ${order.user?.lastName || ''}`.trim() || 'Неизвестно',
         totalAmount: Number(order.totalAmount),
         status: order.status,
         createdAt: order.createdAt.toISOString(),
@@ -866,8 +884,8 @@ app.get('/api/admin/orders', authenticateTelegramUser, async (req: any, res: any
   }
 });
 
-// API для получения статистики (админ)
-app.get('/api/admin/stats', authenticateTelegramUser, async (req: any, res: any) => {
+// API для получения статистики (админ) - ДЛЯ ВЕБА И TELEGRAM
+app.get('/api/admin/stats', authenticateAdmin, async (req: any, res: any) => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -923,8 +941,8 @@ app.get('/api/admin/stats', authenticateTelegramUser, async (req: any, res: any)
   }
 });
 
-// API для обновления статуса заказа (админ)
-app.put('/api/admin/orders/:id/status', authenticateTelegramUser, async (req: any, res: any) => {
+// API для обновления статуса заказа (админ) - ДЛЯ ВЕБА И TELEGRAM
+app.put('/api/admin/orders/:id/status', authenticateAdmin, async (req: any, res: any) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -934,8 +952,29 @@ app.put('/api/admin/orders/:id/status', authenticateTelegramUser, async (req: an
       data: { 
         status,
         updatedAt: new Date()
+      },
+      include: {
+        user: true
       }
     });
+
+    // Отправляем уведомление пользователю в Telegram
+    const statusMessages = {
+      'CONFIRMED': 'Ваш заказ подтвержден и готовится',
+      'PREPARING': 'Ваш заказ готовится',
+      'READY': 'Ваш заказ готов к выдаче',
+      'DELIVERED': 'Ваш заказ доставлен',
+      'CANCELLED': 'Ваш заказ отменен'
+    };
+    
+    const message = statusMessages[status as keyof typeof statusMessages];
+    if (message && order.user) {
+      try {
+        await sendTelegramMessage(parseInt(order.user.telegramId), message);
+      } catch (e) {
+        console.error('Ошибка отправки уведомления:', e);
+      }
+    }
 
     res.json({ success: true, order });
   } catch (error) {
@@ -950,18 +989,6 @@ function calculateTotalAmount(items: any[]): number {
     return total + (item.price * item.quantity);
   }, 0);
 }
-
-// Middleware для проверки прав администратора
-const authenticateAdmin = (req: any, res: any, next: any) => {
-  const adminPassword = req.headers['x-admin-password'];
-  
-  // Временная проверка пароля (в продакшене использовать более безопасный способ)
-  if (adminPassword === 'admin123') {
-    next();
-  } else {
-    res.status(401).json({ error: 'Недостаточно прав доступа' });
-  }
-};
 
 // Админские endpoint'ы
 app.post('/api/admin/auth', (req: any, res: any) => {
