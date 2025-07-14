@@ -1,12 +1,13 @@
 name: Deploy to Yandex Cloud (DISABLED)
 
-# Временно отключен из-за отсутствия SSH ключей
+# Полностью отключен - используем update-production.sh для деплоя
 on:
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: false  # Полностью отключаем workflow
     
     steps:
     - name: Checkout code
