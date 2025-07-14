@@ -228,8 +228,8 @@ app.post('/api/orders', authenticateTelegramUser, async (req, res) => {
     let totalAmount = baseAmount;
     let discountAmount = 0;
 
-    // Применяем скидку за доставку "На борт" (-10%)
-    if (deliveryType === 'ONBOARD') {
+    // Применяем скидку за доставку "С собой" (-10%)
+    if (deliveryType === 'TAKEAWAY') {
       discountAmount = baseAmount * 0.1;
     }
 
@@ -554,8 +554,8 @@ app.post('/api/orders/test', async (req, res) => {
     let totalAmount = baseAmount;
     let discountAmount = 0;
 
-    // Применяем скидку за доставку "На борт" (-10%)
-    if (deliveryType === 'ONBOARD') {
+    // Применяем скидку за доставку "С собой" (-10%)
+    if (deliveryType === 'TAKEAWAY') {
       discountAmount = baseAmount * 0.1;
     }
 
