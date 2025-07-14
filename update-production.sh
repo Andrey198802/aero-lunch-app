@@ -20,8 +20,8 @@ echo -e "${GREEN}SSH OK${NC}"
 # Выполняем команды на сервере
 echo -e "${YELLOW}🔄 Запускаем автоматическое обновление...${NC}"
 
-ssh root@aero-lunch.ru '
-cd /root/aero-lunch-app
+ssh -i ~/.ssh/aero_lunch_key ubuntu@aero-lunch.ru '
+cd /home/ubuntu/aero-lunch-app
 
 echo "🔄 Начинаем автоматическое обновление..."
 
@@ -35,17 +35,17 @@ echo "🔨 ПЕРЕСОБИРАЕМ ФРОНТЕНД..."
 npm run build
 
 echo "📁 Копируем фронтенд в nginx..."
-cp -r dist/* /usr/share/nginx/html/
+sudo cp -r dist/* /usr/share/nginx/html/
 
 echo "🔧 Обновляем бэкенд..."
 cd server
 npm ci
 
 echo "🔄 Перезапускаем сервис..."
-systemctl restart aero-lunch-backend
+sudo systemctl restart aero-lunch-backend
 
 echo "✅ Проверяем статус..."
-systemctl status aero-lunch-backend --no-pager
+sudo systemctl status aero-lunch-backend --no-pager
 
 echo "🎉 Обновление завершено!"
 '
