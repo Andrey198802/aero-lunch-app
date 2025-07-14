@@ -25,6 +25,7 @@ export default function CheckoutPage({ cart, onNavigateBack, onOrderComplete }: 
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const getTotalPrice = () => {
     return cart.reduce((total, item) => total + (item.price * item.quantity), 0)
@@ -146,6 +147,65 @@ export default function CheckoutPage({ cart, onNavigateBack, onOrderComplete }: 
 
   const dates = generateDates()
   const times = generateTimes()
+
+  const submitOrder = async () => {
+    setIsSubmitting(true)
+    try {
+      const initData = window.Telegram?.WebApp?.initData
+      
+      if (!initData) {
+        console.error('Нет данных Telegram')
+        alert('Ошибка: нет данных авторизации')
+        return
+      }
+
+      // Подготавливаем данные заказа
+      const orderData = {
+        items: cart.map(item => ({
+          id: item.id,
+          title: item.title,
+          price: item.price,
+          quantity: item.quantity,
+          variant: item.variant
+        })),
+        deliveryType: deliveryType === 'delivery' ? 'ONBOARD' : 'TAKEAWAY',
+        flightNumber: flightNumber || null,
+        customerName: name || null,
+        phone: phone || null,
+        email: email || null,
+        notes: `Заказ через Web App. Время: ${getDisplayText()}`,
+        deliveryTime: isAsap ? null : new Date(`${selectedDate} ${selectedTime}`).toISOString(),
+        bonusesUsed: 0,
+        promoCode: null
+      }
+
+      console.log('Отправляем заказ:', orderData)
+
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-telegram-init-data': initData
+        },
+        body: JSON.stringify(orderData)
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('Заказ успешно создан:', result)
+        setShowOrderConfirmation(true)
+      } else {
+        const error = await response.json()
+        console.error('Ошибка создания заказа:', error)
+        alert(`Ошибка создания заказа: ${error.error || 'Неизвестная ошибка'}`)
+      }
+    } catch (error) {
+      console.error('Ошибка при отправке заказа:', error)
+      alert('Ошибка при отправке заказа. Попробуйте еще раз.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -368,21 +428,26 @@ export default function CheckoutPage({ cart, onNavigateBack, onOrderComplete }: 
         style={{ borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}
       >
         <button 
-          onClick={() => setShowOrderConfirmation(true)}
+          onClick={submitOrder}
+          disabled={isSubmitting}
           className="w-full text-white font-semibold transition-colors flex items-center justify-center px-6 rounded-full"
           style={{ 
-            backgroundColor: '#1F1F1F',
+            backgroundColor: isSubmitting ? '#666666' : '#1F1F1F',
             height: '42px',
             fontSize: '14px'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#333333';
+            if (!isSubmitting) {
+              e.currentTarget.style.backgroundColor = '#333333';
+            }
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#1F1F1F';
+            if (!isSubmitting) {
+              e.currentTarget.style.backgroundColor = '#1F1F1F';
+            }
           }}
         >
-          Заказать
+          {isSubmitting ? 'Отправляем...' : 'Заказать'}
         </button>
       </div>
 
