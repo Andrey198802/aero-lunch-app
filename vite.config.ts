@@ -22,6 +22,10 @@ export default defineConfig({
         manualChunks: {
           vendor: ['react', 'react-dom'],
         },
+        // Добавляем хеш к файлам для предотвращения кэширования
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]'
       },
     },
   },
