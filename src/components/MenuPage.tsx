@@ -95,22 +95,6 @@ const ActiveOrderIndicator: React.FC<{
     return iconMap[status] || '📦'
   }
 
-  const getProgressDots = (status: ActiveOrder['status']) => {
-    const steps = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY']
-    const currentIndex = steps.indexOf(status)
-    
-    return steps.map((step, index) => (
-      <div
-        key={step}
-        className={`w-3 h-3 rounded-full transition-colors ${
-          index <= currentIndex 
-            ? 'bg-orange-500' 
-            : 'bg-gray-300'
-        }`}
-      />
-    ))
-  }
-
   return (
     <div className="mx-4 mb-4">
       <div 
@@ -142,9 +126,12 @@ const ActiveOrderIndicator: React.FC<{
           </div>
         </div>
         
-        {/* Индикатор прогресса */}
+        {/* Индикатор прогресса с кружочками */}
         <div className="flex items-center justify-center space-x-2">
-          {getProgressDots(order.status)}
+          <div className={`w-3 h-3 rounded-full ${order.status === 'PENDING' ? 'bg-orange-500 border-2 border-orange-600' : 'bg-orange-500'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${['CONFIRMED', 'PREPARING', 'READY', 'DELIVERED'].includes(order.status) ? 'bg-gray-400' : 'bg-gray-300'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${['PREPARING', 'READY', 'DELIVERED'].includes(order.status) ? 'bg-gray-400' : 'bg-gray-300'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${['READY', 'DELIVERED'].includes(order.status) ? 'bg-gray-400' : 'bg-gray-300'}`}></div>
         </div>
       </div>
     </div>
@@ -161,6 +148,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
   const [showCartButton, setShowCartButton] = useState(false)
   const [cartButtonAnimating, setCartButtonAnimating] = useState(false)
   const [activeOrder, setActiveOrder] = useState<ActiveOrder | null>(null)
+  const [showOrderStatusModal, setShowOrderStatusModal] = useState(false)
   // Загружаем активный заказ
   useEffect(() => {
     const fetchActiveOrder = async () => {
@@ -195,10 +183,8 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
   }, [])
 
   const handleTrackOrder = () => {
-    // Переходим в профиль для отслеживания заказа
-    if (onNavigateToProfile) {
-      onNavigateToProfile()
-    }
+    // Открываем маленькое модальное окно снизу
+    setShowOrderStatusModal(true)
   }
 
   // Управление показом кнопки корзины с анимацией
@@ -2546,6 +2532,121 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
                     </button>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Маленькое модальное окно статуса заказа снизу */}
+      {showOrderStatusModal && activeOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50">
+          <div className="bg-white rounded-t-2xl w-full max-w-md mx-4 mb-4 animate-slide-up">
+            {/* Полоска для свайпа */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
+            </div>
+            
+            {/* Содержимое модального окна */}
+            <div className="px-6 pb-6">
+              {/* Заголовок с иконкой статуса */}
+              <div className="text-center mb-6">
+                <div className="text-4xl mb-2">
+                  {(() => {
+                    const iconMap = {
+                      'PENDING': '📝',
+                      'CONFIRMED': '✅', 
+                      'PREPARING': '👨‍🍳',
+                      'READY': '🎉',
+                      'DELIVERED': '🚚',
+                      'CANCELLED': '❌'
+                    }
+                    return iconMap[activeOrder.status] || '📦'
+                  })()}
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-1">
+                  {(() => {
+                    const statusMap = {
+                      'PENDING': 'В обработке',
+                      'CONFIRMED': 'Подтвержден',
+                      'PREPARING': 'Готовим',
+                      'READY': 'Готов к выдаче',
+                      'DELIVERED': 'Доставлен',
+                      'CANCELLED': 'Отменен'
+                    }
+                    return statusMap[activeOrder.status] || activeOrder.status
+                  })()}
+                </h3>
+                <p className="text-gray-600">
+                  Заказ #{activeOrder.orderNumber.length > 8 ? `${activeOrder.orderNumber.substring(0, 8)}...` : activeOrder.orderNumber}
+                </p>
+              </div>
+
+              {/* Индикатор прогресса с кружочками */}
+              <div className="flex items-center justify-center space-x-3 mb-6">
+                <div className={`w-4 h-4 rounded-full transition-all ${
+                  activeOrder.status === 'PENDING' 
+                    ? 'bg-orange-500 border-2 border-orange-600 shadow-lg' 
+                    : 'bg-orange-500'
+                }`}></div>
+                <div className={`w-4 h-4 rounded-full transition-all ${
+                  ['CONFIRMED', 'PREPARING', 'READY', 'DELIVERED'].includes(activeOrder.status) 
+                    ? activeOrder.status === 'CONFIRMED' 
+                      ? 'bg-blue-500 border-2 border-blue-600 shadow-lg'
+                      : 'bg-blue-500'
+                    : 'bg-gray-300'
+                }`}></div>
+                <div className={`w-4 h-4 rounded-full transition-all ${
+                  ['PREPARING', 'READY', 'DELIVERED'].includes(activeOrder.status) 
+                    ? activeOrder.status === 'PREPARING' 
+                      ? 'bg-yellow-500 border-2 border-yellow-600 shadow-lg'
+                      : 'bg-yellow-500'
+                    : 'bg-gray-300'
+                }`}></div>
+                <div className={`w-4 h-4 rounded-full transition-all ${
+                  ['READY', 'DELIVERED'].includes(activeOrder.status) 
+                    ? activeOrder.status === 'READY' 
+                      ? 'bg-green-500 border-2 border-green-600 shadow-lg'
+                      : 'bg-green-500'
+                    : 'bg-gray-300'
+                }`}></div>
+              </div>
+
+              {/* Информация о заказе */}
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Сумма:</span>
+                  <span className="font-bold text-gray-900">
+                    {activeOrder.totalAmount.toLocaleString('ru-RU')} ₽
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Позиций:</span>
+                  <span className="text-gray-900">
+                    {activeOrder.items.length} {activeOrder.items.length === 1 ? 'позиция' : 'позиций'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Кнопки */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowOrderStatusModal(false)}
+                  className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                >
+                  Закрыть
+                </button>
+                <button
+                  onClick={() => {
+                    setShowOrderStatusModal(false)
+                    if (onNavigateToProfile) {
+                      onNavigateToProfile()
+                    }
+                  }}
+                  className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Подробнее
+                </button>
               </div>
             </div>
           </div>
