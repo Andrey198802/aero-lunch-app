@@ -1223,6 +1223,44 @@ app.post('/api/admin/update', authenticateAdmin, async (req: any, res: any) => {
   }
 });
 
+// Простой webhook для обновления сервера
+app.post('/api/webhook', async (req: any, res: any) => {
+  try {
+    console.log('Получен webhook:', req.body);
+    
+    // Простая проверка что это GitHub webhook
+    if (req.body.ref === 'refs/heads/main' || req.body.action === 'deploy') {
+      console.log('Запускаем обновление сервера...');
+      
+      const { exec } = require('child_process');
+      
+      // Команды для обновления
+      const updateCommand = `
+        cd /root/aero-lunch-app && 
+        git pull origin main && 
+        cd server && 
+        npm run build && 
+        pm2 restart aero-lunch-backend
+      `;
+      
+      exec(updateCommand, (error: any, stdout: string, stderr: string) => {
+        if (error) {
+          console.error('Ошибка обновления:', error);
+          return;
+        }
+        console.log('Обновление успешно:', stdout);
+      });
+      
+      res.json({ success: true, message: 'Обновление запущено' });
+    } else {
+      res.json({ success: false, message: 'Не GitHub webhook' });
+    }
+  } catch (error) {
+    console.error('Ошибка webhook:', error);
+    res.status(500).json({ error: 'Ошибка webhook' });
+  }
+});
+
 // Временный endpoint для создания тестовых пользователей
 app.post('/api/admin/create-test-users', authenticateAdmin, async (req: any, res: any) => {
   try {

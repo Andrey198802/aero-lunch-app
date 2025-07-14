@@ -31,9 +31,10 @@ jobs:
         echo "📦 Фронтенд собран в папку dist/"
         echo "🔧 Для обновления сервера нужно настроить SSH ключи"
         
-    - name: Test webhook
+    - name: Deploy to server
       run: |
-        echo "🚀 Пробуем уведомить сервер о деплое..."
+        echo "🚀 Отправляем webhook на сервер..."
         curl -X POST -H "Content-Type: application/json" \
-             -d '{"action":"deploy","commit":"${{ github.sha }}","branch":"${{ github.ref }}"}' \
-             "https://aero-lunch.ru/api/webhook" || echo "Webhook не настроен" 
+             -d '{"ref":"refs/heads/main","action":"deploy","commit":"${{ github.sha }}","branch":"${{ github.ref }}"}' \
+             "https://aero-lunch.ru/api/webhook"
+        echo "✅ Webhook отправлен!" 
