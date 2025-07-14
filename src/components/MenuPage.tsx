@@ -94,7 +94,14 @@ const ActiveOrderIndicator: React.FC<{
               {order.totalAmount.toLocaleString('ru-RU')} ₽
             </div>
             <div className="text-sm text-gray-500">
-              {order.items.length} {order.items.length === 1 ? 'позиция' : 'позиций'}
+              {(() => {
+                try {
+                  const parsedItems = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+                  return `${parsedItems.length} ${parsedItems.length === 1 ? 'позиция' : 'позиций'}`;
+                } catch {
+                  return `${order.items.length} ${order.items.length === 1 ? 'позиция' : 'позиций'}`;
+                }
+              })()}
             </div>
           </div>
         </div>
@@ -2619,7 +2626,14 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Позиций:</span>
                   <span className="text-gray-900">
-                    {activeOrder.items.length} {activeOrder.items.length === 1 ? 'позиция' : 'позиций'}
+                    {(() => {
+                      try {
+                        const parsedItems = typeof activeOrder.items === 'string' ? JSON.parse(activeOrder.items) : activeOrder.items;
+                        return `${parsedItems.length} ${parsedItems.length === 1 ? 'позиция' : 'позиций'}`;
+                      } catch {
+                        return `${activeOrder.items.length} ${activeOrder.items.length === 1 ? 'позиция' : 'позиций'}`;
+                      }
+                    })()}
                   </span>
                 </div>
               </div>
