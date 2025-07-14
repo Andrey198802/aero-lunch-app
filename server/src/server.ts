@@ -1187,6 +1187,42 @@ app.put('/api/admin/users/:id/status', authenticateAdmin, async (req: any, res: 
   }
 });
 
+// Endpoint для обновления сервера
+app.post('/api/admin/update', authenticateAdmin, async (req: any, res: any) => {
+  try {
+    const { exec } = require('child_process');
+    
+    // Выполняем команды обновления
+    const commands = [
+      'cd /root/aero-lunch-app',
+      'git pull origin main',
+      'cd server',
+      'npm run build',
+      'pm2 restart aero-lunch-backend'
+    ];
+    
+    const command = commands.join(' && ');
+    
+    exec(command, (error: any, stdout: string, stderr: string) => {
+      if (error) {
+        console.error('Ошибка обновления:', error);
+        res.status(500).json({ error: 'Ошибка обновления сервера' });
+        return;
+      }
+      
+      console.log('Обновление выполнено:', stdout);
+      res.json({ 
+        success: true, 
+        message: 'Сервер успешно обновлен',
+        output: stdout
+      });
+    });
+  } catch (error) {
+    console.error('Ошибка обновления сервера:', error);
+    res.status(500).json({ error: 'Ошибка обновления сервера' });
+  }
+});
+
 // Временный endpoint для создания тестовых пользователей
 app.post('/api/admin/create-test-users', authenticateAdmin, async (req: any, res: any) => {
   try {

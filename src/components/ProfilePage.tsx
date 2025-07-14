@@ -628,42 +628,63 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
                       <div className="border-t border-gray-200 pt-4">
                         <h3 className="font-medium text-gray-900 mb-2">Детали оплаты:</h3>
                         <div className="space-y-1 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Сумма заказа:</span>
-                            <span className="text-gray-900">
-                              {(order.totalAmount + (order.bonusesUsed || 0) - (order.promoDiscount || 0)).toLocaleString('ru-RU')} ₽
-                            </span>
-                          </div>
-                          
-                          {order.promoCode && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Промокод "{order.promoCode}":</span>
-                              <span className="text-green-600">
-                                -{order.promoDiscount?.toLocaleString('ru-RU')} ₽
-                              </span>
-                            </div>
-                          )}
-                          
-                          {order.bonusesUsed > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Бонусы:</span>
-                              <span className="text-blue-600">
-                                -{order.bonusesUsed.toLocaleString('ru-RU')} ₽
-                              </span>
-                            </div>
-                          )}
-                          
-                          <div className="flex justify-between font-medium text-gray-900 border-t border-gray-200 pt-1">
-                            <span>К оплате:</span>
-                            <span>{order.totalAmount.toLocaleString('ru-RU')} ₽</span>
-                          </div>
-                          
-                          {order.bonusesEarned > 0 && (
-                            <div className="flex justify-between text-green-600">
-                              <span>Начислено бонусов:</span>
-                              <span>+{order.bonusesEarned}</span>
-                            </div>
-                          )}
+                          {(() => {
+                            // Рассчитываем базовую сумму товаров
+                            const itemsTotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                            const discountAmount = order.promoDiscount || 0;
+                            const bonusesUsed = order.bonusesUsed || 0;
+                            const finalAmount = order.totalAmount;
+                            
+                            return (
+                              <>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Сумма товаров:</span>
+                                  <span className="text-gray-900">
+                                    {itemsTotal.toLocaleString('ru-RU')} ₽
+                                  </span>
+                                </div>
+                                
+                                {discountAmount > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Скидка:</span>
+                                    <span className="text-green-600">
+                                      -{discountAmount.toLocaleString('ru-RU')} ₽
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                {order.promoCode && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Промокод "{order.promoCode}":</span>
+                                    <span className="text-green-600">
+                                      -{discountAmount.toLocaleString('ru-RU')} ₽
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                {bonusesUsed > 0 && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Бонусы:</span>
+                                    <span className="text-blue-600">
+                                      -{bonusesUsed.toLocaleString('ru-RU')} ₽
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                <div className="flex justify-between font-medium text-gray-900 border-t border-gray-200 pt-1">
+                                  <span>К оплате:</span>
+                                  <span>{finalAmount.toLocaleString('ru-RU')} ₽</span>
+                                </div>
+                                
+                                {order.bonusesEarned > 0 && (
+                                  <div className="flex justify-between text-green-600">
+                                    <span>Начислено бонусов:</span>
+                                    <span>+{order.bonusesEarned}</span>
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                       
