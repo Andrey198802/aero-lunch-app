@@ -71,29 +71,7 @@ const ActiveOrderIndicator: React.FC<{
     return statusMap[status] || status
   }
 
-  const getStatusColor = (status: ActiveOrder['status']) => {
-    const colorMap = {
-      'PENDING': 'bg-orange-100 text-orange-800 border-orange-200',
-      'CONFIRMED': 'bg-blue-100 text-blue-800 border-blue-200',
-      'PREPARING': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'READY': 'bg-green-100 text-green-800 border-green-200',
-      'DELIVERED': 'bg-gray-100 text-gray-800 border-gray-200',
-      'CANCELLED': 'bg-red-100 text-red-800 border-red-200'
-    }
-    return colorMap[status] || 'bg-gray-100 text-gray-800 border-gray-200'
-  }
 
-  const getStatusIcon = (status: ActiveOrder['status']) => {
-    const iconMap = {
-      'PENDING': '📝',
-      'CONFIRMED': '✅', 
-      'PREPARING': '👨‍🍳',
-      'READY': '🎉',
-      'DELIVERED': '🚚',
-      'CANCELLED': '❌'
-    }
-    return iconMap[status] || '📦'
-  }
 
   return (
     <div className="mx-4 mb-4">
