@@ -183,12 +183,15 @@ app.post('/api/user/register', async (req, res) => {
         message: 'Пользователь зарегистрирован',
         user: savedUser
       });
+      return;
     } else {
       res.status(400).json({ error: 'Неверные данные пользователя' });
+      return;
     }
   } catch (error) {
     console.error('Ошибка регистрации пользователя:', error);
     res.status(500).json({ error: 'Ошибка регистрации пользователя' });
+    return;
   }
 });
 
