@@ -631,7 +631,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
                           {(() => {
                             // Рассчитываем базовую сумму товаров
                             const itemsTotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-                            const discountAmount = order.promoDiscount || 0;
+                            const discountAmount = order.promoDiscount || 0; // Это общая скидка (включая доставку)
                             const bonusesUsed = order.bonusesUsed || 0;
                             const finalAmount = order.totalAmount;
                             
@@ -646,7 +646,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
                                 
                                 {discountAmount > 0 && (
                                   <div className="flex justify-between">
-                                    <span className="text-gray-600">Скидка:</span>
+                                    <span className="text-gray-600">Скидка за доставку:</span>
                                     <span className="text-green-600">
                                       -{discountAmount.toLocaleString('ru-RU')} ₽
                                     </span>
