@@ -48,16 +48,17 @@ export const OrdersManagement: React.FC<OrdersManagementProps> = ({ onBack }) =>
 
   const fetchOrders = async () => {
     try {
-      const initData = window.Telegram?.WebApp?.initData
       const response = await fetch('/api/admin/orders', {
         headers: {
-          'x-telegram-init-data': initData || ''
+          'x-admin-password': 'admin123'
         }
       })
       
       if (response.ok) {
         const data = await response.json()
         setOrders(data.orders || [])
+      } else {
+        console.error('Ошибка загрузки заказов:', response.status, response.statusText)
       }
     } catch (error) {
       console.error('Ошибка загрузки заказов:', error)
@@ -68,16 +69,17 @@ export const OrdersManagement: React.FC<OrdersManagementProps> = ({ onBack }) =>
 
   const fetchStats = async () => {
     try {
-      const initData = window.Telegram?.WebApp?.initData
       const response = await fetch('/api/admin/stats', {
         headers: {
-          'x-telegram-init-data': initData || ''
+          'x-admin-password': 'admin123'
         }
       })
       
       if (response.ok) {
         const data = await response.json()
         setStats(data)
+      } else {
+        console.error('Ошибка загрузки статистики:', response.status, response.statusText)
       }
     } catch (error) {
       console.error('Ошибка загрузки статистики:', error)
@@ -86,12 +88,11 @@ export const OrdersManagement: React.FC<OrdersManagementProps> = ({ onBack }) =>
 
   const updateOrderStatus = async (orderId: number, newStatus: Order['status']) => {
     try {
-      const initData = window.Telegram?.WebApp?.initData
       const response = await fetch(`/api/admin/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'x-telegram-init-data': initData || ''
+          'x-admin-password': 'admin123'
         },
         body: JSON.stringify({ status: newStatus })
       })
@@ -110,6 +111,8 @@ export const OrdersManagement: React.FC<OrdersManagementProps> = ({ onBack }) =>
         if (selectedOrder?.id === orderId) {
           setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null)
         }
+      } else {
+        console.error('Ошибка обновления статуса:', response.status, response.statusText)
       }
     } catch (error) {
       console.error('Ошибка обновления статуса:', error)
