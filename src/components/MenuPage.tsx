@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 
 interface MenuPageProps {
   onNavigateToLanding: () => void
@@ -40,15 +40,169 @@ interface ItemDetails {
 
 interface DetailedMenuItem extends MenuItem, ItemDetails {}
 
+interface ActiveOrder {
+  id: string
+  orderNumber: string
+  status: 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED'
+  totalAmount: number
+  items: any[]
+  createdAt: string
+  updatedAt: string
+}
+
+// Компонент индикатора активного заказа
+const ActiveOrderIndicator: React.FC<{
+  order: ActiveOrder | null
+  onTrackOrder: (order: ActiveOrder) => void
+}> = ({ order, onTrackOrder }) => {
+  if (!order || order.status === 'DELIVERED' || order.status === 'CANCELLED') {
+    return null
+  }
+
+  const getStatusText = (status: ActiveOrder['status']) => {
+    const statusMap = {
+      'PENDING': 'В обработке',
+      'CONFIRMED': 'Подтвержден',
+      'PREPARING': 'Готовим',
+      'READY': 'Готов к выдаче',
+      'DELIVERED': 'Доставлен',
+      'CANCELLED': 'Отменен'
+    }
+    return statusMap[status] || status
+  }
+
+  const getStatusColor = (status: ActiveOrder['status']) => {
+    const colorMap = {
+      'PENDING': 'bg-orange-100 text-orange-800 border-orange-200',
+      'CONFIRMED': 'bg-blue-100 text-blue-800 border-blue-200',
+      'PREPARING': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'READY': 'bg-green-100 text-green-800 border-green-200',
+      'DELIVERED': 'bg-gray-100 text-gray-800 border-gray-200',
+      'CANCELLED': 'bg-red-100 text-red-800 border-red-200'
+    }
+    return colorMap[status] || 'bg-gray-100 text-gray-800 border-gray-200'
+  }
+
+  const getStatusIcon = (status: ActiveOrder['status']) => {
+    const iconMap = {
+      'PENDING': '📝',
+      'CONFIRMED': '✅', 
+      'PREPARING': '👨‍🍳',
+      'READY': '🎉',
+      'DELIVERED': '🚚',
+      'CANCELLED': '❌'
+    }
+    return iconMap[status] || '📦'
+  }
+
+  const getProgressDots = (status: ActiveOrder['status']) => {
+    const steps = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY']
+    const currentIndex = steps.indexOf(status)
+    
+    return steps.map((step, index) => (
+      <div
+        key={step}
+        className={`w-3 h-3 rounded-full transition-colors ${
+          index <= currentIndex 
+            ? 'bg-orange-500' 
+            : 'bg-gray-300'
+        }`}
+      />
+    ))
+  }
+
+  return (
+    <div className="mx-4 mb-4">
+      <div 
+        className={`rounded-2xl border-2 p-4 cursor-pointer transition-all hover:shadow-md ${getStatusColor(order.status)}`}
+        onClick={() => onTrackOrder(order)}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-3">
+            <div className="text-2xl">
+              {getStatusIcon(order.status)}
+            </div>
+            <div>
+              <div className="font-bold text-lg">
+                {getStatusText(order.status)}
+              </div>
+              <div className="text-sm opacity-75">
+                Заказ #{order.orderNumber.length > 8 ? `${order.orderNumber.substring(0, 8)}...` : order.orderNumber}
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-right">
+            <div className="font-bold text-lg">
+              {order.totalAmount.toLocaleString('ru-RU')} ₽
+            </div>
+            <div className="text-sm opacity-75">
+              {order.items.length} {order.items.length === 1 ? 'позиция' : 'позиций'}
+            </div>
+          </div>
+        </div>
+        
+        {/* Индикатор прогресса */}
+        <div className="flex items-center justify-center space-x-2">
+          {getProgressDots(order.status)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavigateToProfile, onNavigateToAdmin, cart, onUpdateCart }: MenuPageProps) {
-  const [selectedCategory, setSelectedCategory] = useState('Завтраки')
+  const [selectedCategory, setSelectedCategory] = useState('Завтрак')
   const [showVariantModal, setShowVariantModal] = useState(false)
-  const [selectedItem, setSelectedItem] = useState<{ id: number; title: string; price: number } | null>(null)
+  const [selectedVariantItem, setSelectedVariantItem] = useState<{ id: number; title: string; price: number } | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedDetailItem, setSelectedDetailItem] = useState<DetailedMenuItem | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showCartButton, setShowCartButton] = useState(false)
   const [cartButtonAnimating, setCartButtonAnimating] = useState(false)
+  const [activeOrder, setActiveOrder] = useState<ActiveOrder | null>(null)
+  const [showOrderTracking, setShowOrderTracking] = useState(false)
+
+  // Загружаем активный заказ
+  useEffect(() => {
+    const fetchActiveOrder = async () => {
+      try {
+        const initData = window.Telegram?.WebApp?.initData
+        if (!initData) return
+
+        const response = await fetch('/api/orders', {
+          headers: {
+            'x-telegram-init-data': initData
+          }
+        })
+        
+        if (response.ok) {
+          const orders = await response.json()
+          // Находим активный заказ (не завершенный)
+          const active = orders.find((order: ActiveOrder) => 
+            !['DELIVERED', 'CANCELLED'].includes(order.status)
+          )
+          setActiveOrder(active || null)
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки активного заказа:', error)
+      }
+    }
+
+    fetchActiveOrder()
+    
+    // Обновляем каждые 30 секунд
+    const interval = setInterval(fetchActiveOrder, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const handleTrackOrder = (order: ActiveOrder) => {
+    setShowOrderTracking(true)
+    // Здесь можно открыть модальное окно отслеживания или перейти в профиль
+    if (onNavigateToProfile) {
+      onNavigateToProfile()
+    }
+  }
 
   // Управление показом кнопки корзины с анимацией
   useEffect(() => {
@@ -152,21 +306,23 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
 
   // Функции для работы с вариантами
   const openVariantModal = (item: { id: number; title: string; price: number }) => {
-    setSelectedItem(item)
+    setSelectedVariantItem(item)
     setShowVariantModal(true)
   }
 
   const closeVariantModal = () => {
     setShowVariantModal(false)
-    setSelectedItem(null)
+    setSelectedVariantItem(null)
   }
 
   const selectVariant = (variant: string) => {
-    if (selectedItem) {
-      addToCart(selectedItem, variant)
+    if (selectedVariantItem) {
+      addToCart(selectedVariantItem, variant)
     }
     closeVariantModal()
   }
+
+
 
   // Функции для работы с детальным модальным окном
   const openDetailModal = (item: MenuItem) => {
@@ -1605,6 +1761,13 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
 
       {/* Content Area с Tailwind scroll utilities */}
       <main className="py-6 pb-24 scroll-smooth">
+        
+        {/* Индикатор активного заказа */}
+        <ActiveOrderIndicator 
+          order={activeOrder}
+          onTrackOrder={handleTrackOrder}
+        />
+        
         {/* Завтраки Section */}
         <div id="Завтраки" className="mb-4 scroll-mt-36">
           <div className="mb-3 content-safe">
@@ -2072,12 +2235,12 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
       )}
 
       {/* Variant Selection Modal */}
-      {showVariantModal && selectedItem && (
+      {showVariantModal && selectedVariantItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50">
           <div className="bg-white rounded-t-3xl w-full max-w-md p-6 animate-slide-up">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-primary-900">
-                {selectedItem.title}
+                {selectedVariantItem.title}
               </h3>
               <button 
                 onClick={closeVariantModal}
@@ -2093,7 +2256,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
               <p className="text-gray-600 text-sm mb-4">Выберите вариант:</p>
               
               <div className="space-y-3">
-                {getItemVariants(selectedItem.id).map((variant, index) => (
+                {getItemVariants(selectedVariantItem.id).map((variant, index) => (
                   <button
                     key={index}
                     onClick={() => selectVariant(variant)}
@@ -2109,7 +2272,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-primary-900 capitalize">{variant}</span>
-                      <span className="text-black">{selectedItem.price}₽</span>
+                      <span className="text-black">{selectedVariantItem.price}₽</span>
                     </div>
                   </button>
                 ))}
