@@ -128,10 +128,32 @@ const ActiveOrderIndicator: React.FC<{
         
         {/* Индикатор прогресса с кружочками */}
         <div className="flex items-center justify-center space-x-2">
-          <div className={`w-3 h-3 rounded-full ${order.status === 'PENDING' ? 'bg-orange-500 border-2 border-orange-600' : 'bg-orange-500'}`}></div>
-          <div className={`w-3 h-3 rounded-full ${['CONFIRMED', 'PREPARING', 'READY', 'DELIVERED'].includes(order.status) ? 'bg-gray-400' : 'bg-gray-300'}`}></div>
-          <div className={`w-3 h-3 rounded-full ${['PREPARING', 'READY', 'DELIVERED'].includes(order.status) ? 'bg-gray-400' : 'bg-gray-300'}`}></div>
-          <div className={`w-3 h-3 rounded-full ${['READY', 'DELIVERED'].includes(order.status) ? 'bg-gray-400' : 'bg-gray-300'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${
+            order.status === 'PENDING' 
+              ? 'bg-orange-500 border-2 border-orange-600' 
+              : ['CONFIRMED', 'PREPARING', 'READY', 'DELIVERED'].includes(order.status)
+                ? 'bg-orange-500'
+                : 'bg-gray-300'
+          }`}></div>
+          <div className={`w-3 h-3 rounded-full ${
+            order.status === 'CONFIRMED' 
+              ? 'bg-blue-500 border-2 border-blue-600' 
+              : ['PREPARING', 'READY', 'DELIVERED'].includes(order.status)
+                ? 'bg-blue-500'
+                : 'bg-gray-300'
+          }`}></div>
+          <div className={`w-3 h-3 rounded-full ${
+            order.status === 'PREPARING' 
+              ? 'bg-yellow-500 border-2 border-yellow-600' 
+              : ['READY', 'DELIVERED'].includes(order.status)
+                ? 'bg-yellow-500'
+                : 'bg-gray-300'
+          }`}></div>
+          <div className={`w-3 h-3 rounded-full ${
+            order.status === 'READY' 
+              ? 'bg-green-500 border-2 border-green-600' 
+              : 'bg-gray-300'
+          }`}></div>
         </div>
       </div>
     </div>
@@ -177,8 +199,8 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
 
     fetchActiveOrder()
     
-    // Обновляем каждые 30 секунд
-    const interval = setInterval(fetchActiveOrder, 30000)
+    // Обновляем каждые 5 секунд для быстрого отклика
+    const interval = setInterval(fetchActiveOrder, 5000)
     return () => clearInterval(interval)
   }, [])
 
@@ -2582,34 +2604,51 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
                 </p>
               </div>
 
-              {/* Индикатор прогресса с кружочками */}
+              {/* Индикатор прогресса с кружочками и иконками */}
               <div className="flex items-center justify-center space-x-3 mb-6">
-                <div className={`w-4 h-4 rounded-full transition-all ${
+                {/* В обработке */}
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all ${
                   activeOrder.status === 'PENDING' 
-                    ? 'bg-orange-500 border-2 border-orange-600 shadow-lg' 
-                    : 'bg-orange-500'
-                }`}></div>
-                <div className={`w-4 h-4 rounded-full transition-all ${
-                  ['CONFIRMED', 'PREPARING', 'READY', 'DELIVERED'].includes(activeOrder.status) 
-                    ? activeOrder.status === 'CONFIRMED' 
-                      ? 'bg-blue-500 border-2 border-blue-600 shadow-lg'
-                      : 'bg-blue-500'
-                    : 'bg-gray-300'
-                }`}></div>
-                <div className={`w-4 h-4 rounded-full transition-all ${
-                  ['PREPARING', 'READY', 'DELIVERED'].includes(activeOrder.status) 
-                    ? activeOrder.status === 'PREPARING' 
-                      ? 'bg-yellow-500 border-2 border-yellow-600 shadow-lg'
-                      : 'bg-yellow-500'
-                    : 'bg-gray-300'
-                }`}></div>
-                <div className={`w-4 h-4 rounded-full transition-all ${
-                  ['READY', 'DELIVERED'].includes(activeOrder.status) 
-                    ? activeOrder.status === 'READY' 
-                      ? 'bg-green-500 border-2 border-green-600 shadow-lg'
-                      : 'bg-green-500'
-                    : 'bg-gray-300'
-                }`}></div>
+                    ? 'bg-orange-500 border-2 border-orange-600 shadow-lg text-white' 
+                    : ['CONFIRMED', 'PREPARING', 'READY', 'DELIVERED'].includes(activeOrder.status)
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-gray-300 text-gray-500'
+                }`}>
+                  📝
+                </div>
+                
+                {/* Подтвержден */}
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all ${
+                  activeOrder.status === 'CONFIRMED' 
+                    ? 'bg-blue-500 border-2 border-blue-600 shadow-lg text-white' 
+                    : ['PREPARING', 'READY', 'DELIVERED'].includes(activeOrder.status)
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-300 text-gray-500'
+                }`}>
+                  ✅
+                </div>
+                
+                {/* Готовим */}
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all ${
+                  activeOrder.status === 'PREPARING' 
+                    ? 'bg-yellow-500 border-2 border-yellow-600 shadow-lg text-white' 
+                    : ['READY', 'DELIVERED'].includes(activeOrder.status)
+                      ? 'bg-yellow-500 text-white'
+                      : 'bg-gray-300 text-gray-500'
+                }`}>
+                  👨‍🍳
+                </div>
+                
+                {/* Готов */}
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition-all ${
+                  activeOrder.status === 'READY' 
+                    ? 'bg-green-500 border-2 border-green-600 shadow-lg text-white' 
+                    : activeOrder.status === 'DELIVERED'
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-300 text-gray-500'
+                }`}>
+                  🎉
+                </div>
               </div>
 
               {/* Информация о заказе */}
