@@ -743,6 +743,7 @@ async function setMenuButtonForUser(chatId: number) {
       return;
     }
 
+    const timestamp = Date.now();
     const url = `https://api.telegram.org/bot${botToken}/setChatMenuButton`;
     const response = await fetch(url, {
       method: 'POST',
@@ -755,7 +756,7 @@ async function setMenuButtonForUser(chatId: number) {
           type: 'web_app',
           text: 'МЕНЮ',
           web_app: {
-            url: 'https://aero-lunch.ru?v=2.0.0&tgWebAppVersion=2.0.0'
+            url: `https://aero-lunch.ru?v=3.0.0&t=${timestamp}&force_refresh=true`
           }
         }
       }),
@@ -780,6 +781,7 @@ async function setMenuButton() {
       return;
     }
 
+    const timestamp = Date.now();
     const url = `https://api.telegram.org/bot${botToken}/setChatMenuButton`;
     const response = await fetch(url, {
       method: 'POST',
@@ -791,7 +793,7 @@ async function setMenuButton() {
           type: 'web_app',
           text: 'МЕНЮ',
           web_app: {
-            url: 'https://aero-lunch.ru?v=2.0.0&tgWebAppVersion=2.0.0'
+            url: `https://aero-lunch.ru?v=3.0.0&t=${timestamp}&force_refresh=true`
           }
         }
       }),
