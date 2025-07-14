@@ -152,32 +152,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* ТЕСТ КНОПКИ */}
-        <div className="mb-6 p-4 bg-red-100 border border-red-300 rounded-lg">
-          <h3 className="text-lg font-bold text-red-800 mb-2">🚨 ТЕСТ КНОПКИ</h3>
-          <button 
-            onClick={() => alert('ТЕСТ КНОПКИ РАБОТАЕТ!')}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 mr-2"
-          >
-            Тест кнопки
-          </button>
-          <div 
-            onClick={() => alert('ТЕСТ DIV РАБОТАЕТ!')}
-            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer inline-block mr-2"
-          >
-            Тест div
-          </div>
-          <button 
-            onClick={() => {
-              console.log('Принудительный переход к заказам');
-              setCurrentView('orders');
-              window.location.hash = 'orders';
-            }}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-          >
-            ПРИНУДИТЕЛЬНО К ЗАКАЗАМ
-          </button>
-        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Статистика */}
           <div className="bg-white rounded-lg shadow p-6">
@@ -206,20 +181,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
               Управление заказами
             </h3>
             <div className="space-y-3">
-              <div 
-                onClick={() => {
-                  alert('Кнопка "Все заказы" нажата!');
-                  console.log('Кнопка "Все заказы" нажата');
-                  setCurrentView('orders');
-                }}
-                onMouseDown={() => {
-                  console.log('MouseDown на кнопке "Все заказы"');
-                }}
-                className="w-full text-left px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors cursor-pointer"
-                style={{ pointerEvents: 'auto', zIndex: 1000, userSelect: 'none' }}
+              <button 
+                onClick={() => setCurrentView('orders')}
+                className="w-full text-left px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors"
               >
                 📋 Все заказы
-              </div>
+              </button>
               <button className="w-full text-left px-4 py-2 bg-yellow-50 text-yellow-700 rounded-md hover:bg-yellow-100 transition-colors">
                 ⏳ Ожидающие
               </button>
