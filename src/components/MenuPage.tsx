@@ -161,8 +161,6 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
   const [showCartButton, setShowCartButton] = useState(false)
   const [cartButtonAnimating, setCartButtonAnimating] = useState(false)
   const [activeOrder, setActiveOrder] = useState<ActiveOrder | null>(null)
-  const [showOrderTracking, setShowOrderTracking] = useState(false)
-
   // Загружаем активный заказ
   useEffect(() => {
     const fetchActiveOrder = async () => {
@@ -196,9 +194,8 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
     return () => clearInterval(interval)
   }, [])
 
-  const handleTrackOrder = (order: ActiveOrder) => {
-    setShowOrderTracking(true)
-    // Здесь можно открыть модальное окно отслеживания или перейти в профиль
+  const handleTrackOrder = () => {
+    // Переходим в профиль для отслеживания заказа
     if (onNavigateToProfile) {
       onNavigateToProfile()
     }
