@@ -1238,13 +1238,7 @@ app.post('/api/webhook', async (req: any, res: any) => {
       const { exec } = require('child_process');
       
       // Команды для обновления
-      const updateCommand = `
-        cd /root/aero-lunch-app && 
-        git pull origin main && 
-        cd server && 
-        npm run build && 
-        pm2 restart aero-lunch-backend
-      `;
+      const updateCommand = '/home/ubuntu/aero-lunch-app/auto-update.sh';
       
       exec(updateCommand, (error: any, stdout: string, stderr: string) => {
         if (error) {
