@@ -157,16 +157,26 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
           <h3 className="text-lg font-bold text-red-800 mb-2">🚨 ТЕСТ КНОПКИ</h3>
           <button 
             onClick={() => alert('ТЕСТ КНОПКИ РАБОТАЕТ!')}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 mr-2"
           >
             Тест кнопки
           </button>
           <div 
             onClick={() => alert('ТЕСТ DIV РАБОТАЕТ!')}
-            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer inline-block"
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer inline-block mr-2"
           >
             Тест div
           </div>
+          <button 
+            onClick={() => {
+              console.log('Принудительный переход к заказам');
+              setCurrentView('orders');
+              window.location.hash = 'orders';
+            }}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            ПРИНУДИТЕЛЬНО К ЗАКАЗАМ
+          </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Статистика */}
