@@ -9,6 +9,216 @@ interface ProfilePageProps {
   onBack: () => void
 }
 
+// Компонент модального окна для отслеживания заказа
+const OrderTrackingModal: React.FC<{
+  order: OrderHistoryItem | null
+  onClose: () => void
+}> = ({ order, onClose }) => {
+  if (!order) return null
+
+  const getStatusSteps = () => {
+    const allSteps = [
+      { 
+        key: 'PENDING', 
+        title: 'В обработке', 
+        description: 'Заказ принят и обрабатывается',
+        icon: '📝'
+      },
+      { 
+        key: 'CONFIRMED', 
+        title: 'Подтвержден', 
+        description: 'Заказ подтвержден и передан на кухню',
+        icon: '✅'
+      },
+      { 
+        key: 'PREPARING', 
+        title: 'Готовим', 
+        description: 'Ваш заказ готовится',
+        icon: '👨‍🍳'
+      },
+      { 
+        key: 'READY', 
+        title: 'Готов', 
+        description: 'Заказ готов к выдаче',
+        icon: '🎉'
+      },
+      { 
+        key: 'DELIVERED', 
+        title: 'Доставлен', 
+        description: 'Заказ успешно доставлен',
+        icon: '🚚'
+      }
+    ]
+
+    // Если заказ отменен, показываем только первый шаг + отмену
+    if (order.status === 'CANCELLED') {
+      return [
+        allSteps[0],
+        { 
+          key: 'CANCELLED', 
+          title: 'Отменен', 
+          description: 'Заказ был отменен',
+          icon: '❌'
+        }
+      ]
+    }
+
+    return allSteps
+  }
+
+  const getCurrentStepIndex = () => {
+    const steps = getStatusSteps()
+    return steps.findIndex(step => step.key === order.status)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const steps = getStatusSteps()
+  const currentStepIndex = getCurrentStepIndex()
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Отслеживание заказа
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <div className="mt-2">
+            <div className="font-medium text-gray-900">
+              Заказ #{order.orderNumber.length > 20 ? `${order.orderNumber.substring(0, 8)}...` : order.orderNumber}
+            </div>
+            <div className="text-sm text-gray-600">
+              {formatDate(order.createdAt)}
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Steps */}
+        <div className="px-6 py-6">
+          <div className="space-y-4">
+            {steps.map((step, index) => {
+              const isCompleted = index <= currentStepIndex
+              const isCurrent = index === currentStepIndex
+              const isCancelled = order.status === 'CANCELLED' && step.key === 'CANCELLED'
+              
+              return (
+                <div key={step.key} className="flex items-start space-x-3">
+                  {/* Icon/Status */}
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                    isCancelled 
+                      ? 'bg-red-100 text-red-600' 
+                      : isCompleted 
+                        ? 'bg-green-100 text-green-600' 
+                        : isCurrent 
+                          ? 'bg-blue-100 text-blue-600 animate-pulse' 
+                          : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    {isCancelled ? '❌' : isCompleted ? '✓' : step.icon}
+                  </div>
+                  
+                  {/* Step Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className={`font-medium ${
+                      isCancelled 
+                        ? 'text-red-900' 
+                        : isCompleted 
+                          ? 'text-green-900' 
+                          : isCurrent 
+                            ? 'text-blue-900' 
+                            : 'text-gray-500'
+                    }`}>
+                      {step.title}
+                    </div>
+                    <div className={`text-sm mt-1 ${
+                      isCancelled 
+                        ? 'text-red-600' 
+                        : isCompleted 
+                          ? 'text-green-600' 
+                          : isCurrent 
+                            ? 'text-blue-600' 
+                            : 'text-gray-400'
+                    }`}>
+                      {step.description}
+                    </div>
+                    
+                    {isCurrent && order.status !== 'CANCELLED' && (
+                      <div className="text-xs text-blue-500 mt-1 font-medium">
+                        Текущий этап
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Time */}
+                  <div className="text-xs text-gray-500 flex-shrink-0">
+                    {isCompleted && (
+                      <div>
+                        {formatDate(order.updatedAt)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Order Details */}
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <div className="text-sm">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-gray-600">Сумма заказа:</span>
+              <span className="font-medium text-gray-900">
+                {order.totalAmount.toLocaleString('ru-RU')} ₽
+              </span>
+            </div>
+            
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-gray-600">Позиций:</span>
+              <span className="text-gray-900">
+                {order.items.length} {order.items.length === 1 ? 'позиция' : 'позиций'}
+              </span>
+            </div>
+            
+            {order.bonusesUsed > 0 && (
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-gray-600">Использовано бонусов:</span>
+                <span className="text-blue-600">-{order.bonusesUsed}</span>
+              </div>
+            )}
+            
+            {order.bonusesEarned > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Начислено бонусов:</span>
+                <span className="text-green-600">+{order.bonusesEarned}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
   const { profile, loading: profileLoading, error: profileError, updateProfile } = useProfile()
   const { bonusHistory, loading: bonusLoading, hasMore: bonusHasMore, loadMore: loadMoreBonuses } = useBonuses()
@@ -20,6 +230,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState<'profile' | 'bonuses' | 'orders'>('profile')
   const [expandedOrder, setExpandedOrder] = useState<number | null>(null)
+  const [trackingOrder, setTrackingOrder] = useState<OrderHistoryItem | null>(null)
 
   useEffect(() => {
     tg?.BackButton.show()
@@ -138,6 +349,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
 
   const toggleOrderExpanded = (orderId: number) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId)
+  }
+
+  const showOrderTracking = (order: OrderHistoryItem) => {
+    setTrackingOrder(order)
   }
 
   if (profileLoading) {
@@ -575,17 +790,28 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
                       <div>
                         {order.items.length} {order.items.length === 1 ? 'позиция' : 'позиций'}
                       </div>
-                      <div className="flex items-center space-x-2 text-xs">
-                        {order.bonusesUsed > 0 && (
-                          <div className="text-blue-600">
-                            -{order.bonusesUsed}
-                          </div>
-                        )}
-                        {order.bonusesEarned > 0 && (
-                          <div className="text-green-600">
-                            +{order.bonusesEarned}
-                          </div>
-                        )}
+                      <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 text-xs">
+                          {order.bonusesUsed > 0 && (
+                            <div className="text-blue-600">
+                              -{order.bonusesUsed}
+                            </div>
+                          )}
+                          {order.bonusesEarned > 0 && (
+                            <div className="text-green-600">
+                              +{order.bonusesEarned}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            showOrderTracking(order)
+                          }}
+                          className="px-3 py-1 bg-blue-600 text-white text-xs rounded-full hover:bg-blue-700 transition-colors"
+                        >
+                          Отследить
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -712,6 +938,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
           </div>
         )}
       </div>
+
+      {/* Модальное окно для отслеживания заказа */}
+      {trackingOrder && (
+        <OrderTrackingModal
+          order={trackingOrder}
+          onClose={() => setTrackingOrder(null)}
+        />
+      )}
     </div>
   )
 } 
