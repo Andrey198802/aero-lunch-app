@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { UsersManagement } from './UsersManagement'
+import { OrdersManagement } from './OrdersManagement'
 
 interface AdminPageProps {
   onBack: () => void
@@ -10,7 +11,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [currentView, setCurrentView] = useState<'dashboard' | 'users'>('dashboard')
+  const [currentView, setCurrentView] = useState<'dashboard' | 'users' | 'orders'>('dashboard')
 
   // Временный пароль для демонстрации (в продакшене должен быть в env)
   const ADMIN_PASSWORD = 'admin123'
@@ -110,6 +111,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
     return <UsersManagement onBack={() => setCurrentView('dashboard')} />
   }
 
+  // Показать управление заказами
+  if (currentView === 'orders') {
+    return <OrdersManagement onBack={() => setCurrentView('dashboard')} />
+  }
+
   // Основная админ панель
   return (
     <div className="min-h-screen bg-gray-100">
@@ -170,7 +176,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
               Управление заказами
             </h3>
             <div className="space-y-3">
-              <button className="w-full text-left px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors">
+              <button 
+                onClick={() => setCurrentView('orders')}
+                className="w-full text-left px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors"
+              >
                 📋 Все заказы
               </button>
               <button className="w-full text-left px-4 py-2 bg-yellow-50 text-yellow-700 rounded-md hover:bg-yellow-100 transition-colors">

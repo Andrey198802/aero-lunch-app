@@ -822,6 +822,128 @@ app.post('/api/telegram/update-menu-button', async (req, res) => {
   }
 });
 
+// API для получения всех заказов (админ)
+app.get('/api/admin/orders', authenticateTelegramUser, async (req: any, res: any) => {
+  try {
+    const orders = await prisma.order.findMany({
+      include: {
+        user: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    const formattedOrders = orders.map(order => {
+      // Парсим items из JSON
+      const items = Array.isArray(order.items) ? order.items : [];
+      
+      return {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        customerName: order.customerName || `${order.user.firstName} ${order.user.lastName || ''}`.trim(),
+        totalAmount: Number(order.totalAmount),
+        status: order.status,
+        createdAt: order.createdAt.toISOString(),
+        updatedAt: order.updatedAt.toISOString(),
+        deliveryType: order.deliveryType,
+        flightNumber: order.flightNumber,
+        phone: order.phone,
+        notes: order.notes,
+        items: items.map((item: any) => ({
+          id: item.id || 0,
+          name: item.title || item.name || 'Неизвестно',
+          quantity: item.quantity || 1,
+          price: item.price || 0
+        }))
+      };
+    });
+
+    res.json({ orders: formattedOrders });
+  } catch (error) {
+    console.error('Ошибка получения заказов:', error);
+    res.status(500).json({ error: 'Ошибка получения заказов' });
+  }
+});
+
+// API для получения статистики (админ)
+app.get('/api/admin/stats', authenticateTelegramUser, async (req: any, res: any) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Заказы сегодня
+    const todayOrders = await prisma.order.count({
+      where: {
+        createdAt: {
+          gte: today,
+          lt: tomorrow
+        }
+      }
+    });
+
+    // Активные пользователи (за последние 30 дней)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const activeUsers = await prisma.user.count({
+      where: {
+        lastActive: {
+          gte: thirtyDaysAgo
+        }
+      }
+    });
+
+    // Выручка за сегодня
+    const todayRevenue = await prisma.order.aggregate({
+      _sum: {
+        totalAmount: true
+      },
+      where: {
+        createdAt: {
+          gte: today,
+          lt: tomorrow
+        },
+        status: {
+          in: ['CONFIRMED', 'PREPARING', 'READY', 'DELIVERED']
+        }
+      }
+    });
+
+    res.json({
+      todayOrders,
+      activeUsers,
+      todayRevenue: todayRevenue._sum.totalAmount || 0
+    });
+  } catch (error) {
+    console.error('Ошибка получения статистики:', error);
+    res.status(500).json({ error: 'Ошибка получения статистики' });
+  }
+});
+
+// API для обновления статуса заказа (админ)
+app.put('/api/admin/orders/:id/status', authenticateTelegramUser, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const order = await prisma.order.update({
+      where: { id: id },
+      data: { 
+        status,
+        updatedAt: new Date()
+      }
+    });
+
+    res.json({ success: true, order });
+  } catch (error) {
+    console.error('Ошибка обновления статуса заказа:', error);
+    res.status(500).json({ error: 'Ошибка обновления статуса заказа' });
+  }
+});
+
 // Функция для расчета общей суммы заказа
 function calculateTotalAmount(items: any[]): number {
   return items.reduce((total, item) => {
