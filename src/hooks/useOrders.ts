@@ -38,6 +38,7 @@ export const useOrders = () => {
             const orders = result.orders || []
             const transformedOrders: OrderHistoryItem[] = orders.map((order: any) => ({
               id: order.id,
+              orderNumber: order.orderNumber || order.id,
               status: order.status,
               totalAmount: Number(order.totalAmount),
               bonusesUsed: Number(order.bonusesUsed) || 0,
@@ -81,6 +82,7 @@ export const useOrders = () => {
       const testOrders: OrderHistoryItem[] = [
         {
           id: 1001,
+          orderNumber: '101',
           status: 'DELIVERED',
           totalAmount: 890,
           bonusesUsed: 50,
@@ -108,6 +110,7 @@ export const useOrders = () => {
         },
         {
           id: 1002,
+          orderNumber: '102',
           status: 'PREPARING',
           totalAmount: 650,
           bonusesUsed: 0,

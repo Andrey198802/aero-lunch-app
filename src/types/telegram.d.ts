@@ -125,6 +125,7 @@ export type BonusHistoryItem = {
 
 export type OrderHistoryItem = {
   id: number
+  orderNumber: string
   status: 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED'
   totalAmount: number
   bonusesUsed: number

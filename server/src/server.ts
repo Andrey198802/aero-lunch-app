@@ -261,23 +261,28 @@ app.post('/api/orders', authenticateTelegramUser, async (req, res) => {
 
     // Создаем заказ в транзакции
     const result = await prisma.$transaction(async (tx) => {
-    // Создаем заказ
+      // Генерируем номер заказа начиная с 100
+      const orderCount = await tx.order.count();
+      const orderNumber = (100 + orderCount).toString();
+      
+      // Создаем заказ
       const order = await tx.order.create({
-      data: {
-        userId: telegramUser.id.toString(),
-        items: JSON.stringify(items),
+        data: {
+          orderNumber: orderNumber,
+          userId: telegramUser.id.toString(),
+          items: JSON.stringify(items),
           totalAmount: totalAmount,
           discountAmount: discountAmount,
           bonusesUsed: actualBonusesUsed,
           bonusesEarned: bonusesEarned,
           promoCode: promoCode || null,
           deliveryType: deliveryType,
-        deliveryAddress,
+          deliveryAddress,
           flightNumber,
           customerName,
-        phone,
+          phone,
           email,
-        notes,
+          notes,
           deliveryTime: deliveryTime ? new Date(deliveryTime) : null,
           status: 'PENDING',
         },

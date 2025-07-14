@@ -552,7 +552,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
                         </div>
                         <div>
                           <div className="font-medium text-gray-900">
-                            Заказ #{order.id}
+                            Заказ №{order.orderNumber}
                           </div>
                           <div className="text-sm text-gray-600">
                             {formatDate(order.createdAt)}
