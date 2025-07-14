@@ -408,7 +408,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
         isScrollingRef.current = false
       }, 100)
     }
-
+    
     window.addEventListener('scroll', handleScroll, { passive: true })
     
     return () => {
@@ -1593,7 +1593,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
                     : isNewCategory 
                       ? 'border border-gray-300 text-gray-400 cursor-not-allowed'
                       : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
-                }`}
+              }`}
                 disabled={isNewCategory}
             >
               {category}
@@ -2222,7 +2222,7 @@ export default function MenuPage({ onNavigateToLanding, onNavigateToCart, onNavi
                     src={selectedDetailItem.images[currentImageIndex]}
                     alt={selectedDetailItem.title}
                   className="w-48 h-48 object-contain opacity-60"
-                />
+                  />
                 
                 {/* Close button overlay */}
                 <button 

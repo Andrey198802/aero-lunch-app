@@ -267,25 +267,25 @@ app.post('/api/orders', authenticateTelegramUser, async (req, res) => {
       // Генерируем номер заказа начиная с 100
       const orderCount = await tx.order.count();
       const orderNumber = (100 + orderCount).toString();
-      
-      // Создаем заказ
+
+    // Создаем заказ
       const order = await tx.order.create({
-        data: {
+      data: {
           orderNumber: orderNumber,
-          userId: telegramUser.id.toString(),
-          items: JSON.stringify(items),
+        userId: telegramUser.id.toString(),
+        items: JSON.stringify(items),
           totalAmount: totalAmount,
           discountAmount: discountAmount,
           bonusesUsed: actualBonusesUsed,
           bonusesEarned: bonusesEarned,
           promoCode: promoCode || null,
           deliveryType: deliveryType,
-          deliveryAddress,
+        deliveryAddress,
           flightNumber,
           customerName,
-          phone,
+        phone,
           email,
-          notes,
+        notes,
           deliveryTime: deliveryTime ? new Date(deliveryTime) : null,
           status: 'PENDING',
         },
@@ -755,7 +755,7 @@ async function setMenuButtonForUser(chatId: number) {
           type: 'web_app',
           text: 'МЕНЮ',
           web_app: {
-            url: 'https://aero-lunch.ru'
+            url: 'https://aero-lunch.ru?v=2.0.0&tgWebAppVersion=2.0.0'
           }
         }
       }),
@@ -791,7 +791,7 @@ async function setMenuButton() {
           type: 'web_app',
           text: 'МЕНЮ',
           web_app: {
-            url: 'https://aero-lunch.ru'
+            url: 'https://aero-lunch.ru?v=2.0.0&tgWebAppVersion=2.0.0'
           }
         }
       }),
@@ -808,6 +808,17 @@ async function setMenuButton() {
     console.error('Ошибка установки кнопки меню:', error);
   }
 }
+
+// API endpoint для принудительного обновления кнопки меню
+app.post('/api/telegram/update-menu-button', async (req, res) => {
+  try {
+    await setMenuButton();
+    res.json({ success: true, message: 'Кнопка меню обновлена' });
+  } catch (error) {
+    console.error('Ошибка обновления кнопки меню:', error);
+    res.status(500).json({ error: 'Ошибка обновления кнопки меню' });
+  }
+});
 
 // Функция для расчета общей суммы заказа
 function calculateTotalAmount(items: any[]): number {

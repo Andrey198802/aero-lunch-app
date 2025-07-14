@@ -139,8 +139,8 @@ function App() {
   // Контейнер с анимацией
   const pageContent = () => {
     console.log('Rendering page:', currentPage)
-    
-    if (currentPage === 'landing') {
+
+  if (currentPage === 'landing') {
       return <LandingPage onNavigateToMenu={() => navigateWithAnimation('menu')} />
     }
 
@@ -179,10 +179,10 @@ function App() {
           onBack={() => navigateWithAnimation('menu')}
         />
       )
-    }
+  }
 
-    return (
-      <MenuPage 
+  return (
+    <MenuPage 
         onNavigateToLanding={() => navigateWithAnimation('landing')}
         onNavigateToCart={() => navigateWithAnimation('cart')}
         onNavigateToProfile={() => navigateWithAnimation('profile')}
