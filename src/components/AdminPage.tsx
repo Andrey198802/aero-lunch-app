@@ -151,6 +151,23 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* ТЕСТ КНОПКИ */}
+        <div className="mb-6 p-4 bg-red-100 border border-red-300 rounded-lg">
+          <h3 className="text-lg font-bold text-red-800 mb-2">🚨 ТЕСТ КНОПКИ</h3>
+          <button 
+            onClick={() => alert('ТЕСТ КНОПКИ РАБОТАЕТ!')}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Тест кнопки
+          </button>
+          <div 
+            onClick={() => alert('ТЕСТ DIV РАБОТАЕТ!')}
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer inline-block"
+          >
+            Тест div
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Статистика */}
           <div className="bg-white rounded-lg shadow p-6">
