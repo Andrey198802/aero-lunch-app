@@ -545,14 +545,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
                     className="px-6 py-4 cursor-pointer hover:bg-gray-50"
                     onClick={() => toggleOrderExpanded(order.id)}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="text-lg">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        <div className="text-lg flex-shrink-0">
                           {getStatusIcon(order.status)}
                         </div>
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            Заказ №{order.orderNumber}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">
+                            Заказ №{order.orderNumber.length > 20 ? `${order.orderNumber.substring(0, 20)}...` : order.orderNumber}
                           </div>
                           <div className="text-sm text-gray-600">
                             {formatDate(order.createdAt)}
@@ -560,11 +560,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
                         </div>
                       </div>
                       
-                      <div className="text-right">
+                      <div className="text-right flex-shrink-0">
                         <div className="font-bold text-gray-900">
                           {order.totalAmount.toLocaleString('ru-RU')} ₽
                         </div>
-                        <div className={`text-sm ${getStatusColor(order.status)}`}>
+                        <div className={`text-xs ${getStatusColor(order.status)}`}>
                           {getStatusText(order.status)}
                         </div>
                       </div>
@@ -575,15 +575,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
                       <div>
                         {order.items.length} {order.items.length === 1 ? 'позиция' : 'позиций'}
                       </div>
-                      <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2 text-xs">
                         {order.bonusesUsed > 0 && (
                           <div className="text-blue-600">
-                            Бонусы: -{order.bonusesUsed}
+                            -{order.bonusesUsed}
                           </div>
                         )}
                         {order.bonusesEarned > 0 && (
                           <div className="text-green-600">
-                            Начислено: +{order.bonusesEarned}
+                            +{order.bonusesEarned}
                           </div>
                         )}
                       </div>
