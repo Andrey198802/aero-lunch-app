@@ -1,8 +1,7 @@
-name: Deploy to Yandex Cloud
+name: Deploy to Yandex Cloud (DISABLED)
 
+# Временно отключен из-за отсутствия SSH ключей
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -35,25 +34,23 @@ jobs:
     - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.0
       with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
+        host: 158.160.177.251
+        username: root
         key: ${{ secrets.SSH_KEY }}
         script: |
-          cd /home/ubuntu/aero-lunch
+          cd /root/aero-lunch-app
           git pull origin main
           
           # Обновляем фронтенд
           npm ci
           npm run build
           
-          # Временно отключаем бэкенд
-          # cd server
-          # npm ci
-          # npm run build
+          # Обновляем бэкенд
+          cd server
+          npm ci
+          npm run build
           
-          # Перезапускаем только фронтенд
-          # cd ..
-          # docker-compose down
-          docker-compose up -d frontend
+          # Перезапускаем сервер
+          pm2 restart aero-lunch-backend
           
-          echo "✅ Деплой фронтенда завершён!" 
+          echo "✅ Деплой завершён!" 

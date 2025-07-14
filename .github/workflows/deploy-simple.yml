@@ -1,0 +1,39 @@
+name: Simple Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build frontend
+      run: npm run build
+
+    - name: Notify deployment
+      run: |
+        echo "✅ Код собран и готов к деплою!"
+        echo "📦 Фронтенд собран в папку dist/"
+        echo "🔧 Для обновления сервера нужно настроить SSH ключи"
+        
+    - name: Test webhook
+      run: |
+        echo "🚀 Пробуем уведомить сервер о деплое..."
+        curl -X POST -H "Content-Type: application/json" \
+             -d '{"action":"deploy","commit":"${{ github.sha }}","branch":"${{ github.ref }}"}' \
+             "https://aero-lunch.ru/api/webhook" || echo "Webhook не настроен" 
